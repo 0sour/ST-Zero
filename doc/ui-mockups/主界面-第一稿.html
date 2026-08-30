@@ -382,7 +382,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       <div class="tb-btn" title="世界书"><svg class="ic"><use href="#i-book"/></svg></div>
       <div class="tb-btn" title="正则"><svg class="ic"><use href="#i-wrench"/></svg></div>
       <div class="tb-btn" title="预设"><svg class="ic"><use href="#i-sliders"/></svg></div>
-      <div class="tb-btn active" title="设置"><svg class="ic"><use href="#i-settings"/></svg></div>
+      <div class="tb-btn" title="设置" id="btn-settings"><svg class="ic"><use href="#i-settings"/></svg></div>
       <div class="avatar" title="用户菜单">S</div>
     </div>
   </div>
@@ -442,6 +442,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         <div class="rp-tab" data-tab="world">世界书</div>
         <div class="rp-tab" data-tab="regex">正则</div>
         <div class="rp-tab" data-tab="preset">预设</div>
+        <div class="rp-tab" data-tab="settings">设置</div>
       </div>
       <div class="rp-body">
         <!-- 角色编辑 -->
@@ -582,6 +583,11 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             <button class="btn primary">保存预设</button>
             <button class="btn">恢复默认</button>
           </div>
+            </div>
+          </div>
+
+        <!-- 设置 -->
+        <div class="rp-panel" id="panel-settings">
           <div class="section-title">背景</div>
           <div class="bg-presets">
             <button class="bg-preset" data-bg="0" title="默认"></button>
@@ -621,9 +627,8 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             <div class="slider-row">
               <input type="range" id="panel-opacity" min="0" max="100" step="1" value="85">
               <input type="number" id="panel-opacity-num" min="0" max="100" step="1" value="85" style="width:60px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text-1);font-size:12px">
-            </div>
-          </div>
-        </div>
+
+        </div>        </div>
       </div>
     </div>
   </div>
@@ -849,6 +854,14 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       tab.classList.add('active');
       $('#panel-' + tab.getAttribute('data-tab')).classList.add('active');
     });
+  });
+
+  /* 顶栏设置按钮 → 设置 tab */
+  $('#btn-settings').addEventListener('click', function () {
+    $$('.rp-tab').forEach(function (t) { t.classList.remove('active'); });
+    $$('.rp-panel').forEach(function (p) { p.classList.remove('active'); });
+    document.querySelector('.rp-tab[data-tab="settings"]').classList.add('active');
+    $('#panel-settings').classList.add('active');
   });
 
   /* ============ 正则开关 ============ */
