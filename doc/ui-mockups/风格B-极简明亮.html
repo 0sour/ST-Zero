@@ -27,7 +27,9 @@
   --mono: 'JetBrains Mono', 'Consolas', monospace;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: var(--font); background: #eef0f4; color: var(--text-1); font-size: 14px; background-image: var(--bg-image, radial-gradient(ellipse at 20% 0%, rgba(79,110,247,.08), transparent 55%), radial-gradient(ellipse at 80% 100%, rgba(48,164,108,.08), transparent 55%)); background-size: cover; background-position: center; background-attachment: fixed; }
+body { font-family: var(--font); background: #eef0f4; color: var(--text-1); font-size: 14px; }
+/* 背景层：fixed 独立层，backdrop-filter 才能正确采样模糊 */
+.bg-layer { position: fixed; inset: 0; z-index: -1; background-image: var(--bg-image, radial-gradient(ellipse at 20% 0%, rgba(79,110,247,.08), transparent 55%), radial-gradient(ellipse at 80% 100%, rgba(48,164,108,.08), transparent 55%)); background-size: cover; background-position: center; }
 /* 毛玻璃噪点层（防渐变 banding） */
 body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: .025; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 /* 背景预设按钮 */
@@ -48,12 +50,12 @@ body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-ev
 
 .page { display: flex; gap: 24px; padding: 24px; min-height: 100vh; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
 .viewport { border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg); position: relative; background: var(--bg-0); }
-.viewport-label { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 50; font-size: 11px; color: var(--text-3); background: rgba(255,255,255,.9); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+.viewport-label { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 50; font-size: 11px; color: var(--text-3); background: rgba(255,255,255,.78); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow); }
 .desktop { width: 1100px; height: 700px; display: flex; flex-direction: column; }
 .mobile { width: 390px; height: 780px; display: flex; flex-direction: column; }
 
 /* 顶栏 */
-.topbar { height: 52px; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: rgba(255,255,255,.9); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.topbar { height: 52px; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: rgba(255,255,255,.78); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: var(--text-1); }
 .logo-badge { width: 26px; height: 26px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; }
 .topbar-search { flex: 1; max-width: 360px; position: relative; }
@@ -68,7 +70,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-ev
 
 /* 桌面三栏 */
 .desktop-body { flex: 1; display: flex; min-height: 0; }
-.sidebar { width: 260px; background: rgba(255,255,255,.9); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+.sidebar { width: 260px; background: rgba(255,255,255,.78); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
 .sidebar-header { padding: 12px 14px; display: flex; gap: 8px; border-bottom: 1px solid var(--border); }
 .sb-btn { flex: 1; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-1); color: var(--text-1); font-size: 12.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all .15s; }
 .sb-btn .ic { font-size: 13px; }
@@ -93,7 +95,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-ev
 
 /* 聊天区 */
 .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-0); }
-.chat-header { height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.9); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); flex-shrink: 0; }
+.chat-header { height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.78); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); flex-shrink: 0; }
 .chat-header .ch-name { font-weight: 600; font-size: 14px; }
 .chat-header .ch-sub { font-size: 11.5px; color: var(--text-3); }
 .chat-header .spacer { flex: 1; }
@@ -121,7 +123,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-ev
 @keyframes blink { 0%,80%,100% { opacity: .2; } 40% { opacity: 1; } }
 
 /* 输入栏 */
-.chat-input { border-top: 1px solid var(--border); padding: 12px 20px; background: rgba(255,255,255,.9); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); flex-shrink: 0; }
+.chat-input { border-top: 1px solid var(--border); padding: 12px 20px; background: rgba(255,255,255,.78); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); flex-shrink: 0; }
 .input-row { display: flex; gap: 8px; align-items: flex-end; }
 .input-row textarea { flex: 1; background: var(--bg-2); border: 1px solid transparent; border-radius: 12px; padding: 10px 14px; color: var(--text-1); font-size: 13.5px; resize: none; outline: none; min-height: 44px; font-family: var(--font); transition: all .15s; }
 .input-row textarea:focus { background: var(--bg-1); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,110,247,.12); }
@@ -132,7 +134,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-ev
 .it-btn:hover { background: var(--bg-2); color: var(--text-1); }
 
 /* 右侧栏 */
-.right-panel { width: 320px; background: rgba(255,255,255,.9); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+.right-panel { width: 320px; background: rgba(255,255,255,.78); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
 .rp-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 8px; }
 .rp-tab { flex: 1; height: 42px; border: none; background: transparent; color: var(--text-3); font-size: 12.5px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; }
 .rp-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
@@ -201,11 +203,11 @@ body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-ev
 .mobile .chat-input { padding: 10px; }
 .mobile .input-row textarea { min-height: 40px; font-size: 14px; }
 .mobile .send-btn { width: 40px; height: 40px; }
-.mobile-drawer { position: absolute; top: 0; bottom: 0; width: 300px; background: rgba(255,255,255,.9); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); border-right: 1px solid var(--border); z-index: 40; transform: translateX(-100%); transition: transform .25s; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+.mobile-drawer { position: absolute; top: 0; bottom: 0; width: 300px; background: rgba(255,255,255,.78); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); border-right: 1px solid var(--border); z-index: 40; transform: translateX(-100%); transition: transform .25s; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
 .mobile-drawer.open { transform: translateX(0); }
 .mobile-overlay { position: absolute; inset: 0; background: rgba(16,24,40,.3); z-index: 30; display: none; }
 .mobile-overlay.show { display: block; }
-.mobile-bottombar { display: flex; border-top: 1px solid var(--border); background: rgba(255,255,255,.9); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); flex-shrink: 0; }
+.mobile-bottombar { display: flex; border-top: 1px solid var(--border); background: rgba(255,255,255,.78); backdrop-filter: blur(20px) saturate(2); -webkit-backdrop-filter: blur(20px) saturate(2); flex-shrink: 0; }
 .mb-tab { flex: 1; height: 52px; border: none; background: transparent; color: var(--text-3); font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
 .mb-tab.active { color: var(--accent); }
 .mb-tab svg { width: 18px; height: 18px; }
@@ -213,6 +215,7 @@ body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-ev
 </style>
 </head>
 <body>
+<div class="bg-layer"></div>
 
 <!-- SVG 图标 sprite（标准线性图标） -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
