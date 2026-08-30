@@ -239,6 +239,56 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 .theme-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; transition: all var(--transition); appearance: none; -webkit-appearance: none; text-align: center; line-height: 26px; }
 .theme-swatch:hover { border-color: var(--accent); }
 .theme-swatch.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+/* 自研下拉选择 */
+.select { position: relative; }
+.select-trigger {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; height: 30px;
+  padding: 0 10px;
+  font-family: var(--font-ui); font-size: 12px;
+  color: var(--text-1);
+  background: rgba(var(--bg-2-rgb), var(--ctrl-alpha));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition);
+  appearance: none; -webkit-appearance: none;
+  line-height: 30px;
+}
+.select-trigger:hover { border-color: var(--border-strong); }
+.select.open .select-trigger { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.select-trigger .sel-value { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.select-trigger .sel-arrow { color: var(--text-3); font-size: 11px; transition: transform var(--transition); flex-shrink: 0; display: flex; }
+.select.open .sel-arrow { transform: rotate(180deg); color: var(--accent); }
+.select-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  z-index: 60;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  max-height: 200px; overflow-y: auto;
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+  transition: all 0.15s ease;
+}
+.select.open .select-menu { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.select-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+}
+.select-option:hover { background: var(--bg-2); color: var(--text-1); }
+.select-option.selected { background: var(--accent-soft); color: var(--accent); }
+.select-option .sel-check { margin-left: auto; color: var(--accent); font-size: 12px; display: none; }
+.select-option.selected .sel-check { display: flex; }
+
 
 /* 弹窗 / Toast */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
@@ -329,9 +379,17 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       </div>
       <div class="sidebar-tools">
         <input id="char-search" placeholder="搜索角色…">
-        <select id="char-sort" style="background:var(--bg-2);border:1px solid var(--border);border-radius:6px;color:var(--text-2);font-size:12px;padding:5px;outline:none">
-          <option>最近</option><option>A-Z</option><option>收藏</option>
-        </select>
+        <div class="select" data-select id="char-sort" style="width:86px;flex-shrink:0">
+          <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
+            <span class="sel-value">最近</span>
+            <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+          </div>
+          <div class="select-menu" role="listbox">
+            <div class="select-option selected" data-value="最近" role="option">最近<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+            <div class="select-option" data-value="A-Z" role="option">A-Z<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+            <div class="select-option" data-value="收藏" role="option">收藏<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+          </div>
+        </div>
       </div>
       <div class="char-list" id="char-list">
         <!-- 角色卡由 JS 渲染 -->
@@ -461,11 +519,17 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         <div class="rp-panel" id="panel-preset">
           <div class="field">
             <label class="field-label">预设</label>
-            <select>
-              <option>ChatML · 默认</option>
-              <option>Llama3</option>
-              <option>Mistral</option>
-            </select>
+            <div class="select" data-select>
+              <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
+                <span class="sel-value">ChatML · 默认</span>
+                <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+              </div>
+              <div class="select-menu" role="listbox">
+                <div class="select-option selected" data-value="ChatML · 默认" role="option">ChatML · 默认<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="Llama3" role="option">Llama3<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="Mistral" role="option">Mistral<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              </div>
+            </div>
           </div>
           <div class="section-title">采样参数</div>
           <div class="field">
@@ -642,7 +706,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
   /* ============ 角色列表渲染 ============ */
   function renderChars() {
     var q = $('#char-search').value.trim().toLowerCase();
-    var sort = $('#char-sort').value;
+    var sort = $('#char-sort .sel-value').textContent;
     var list = characters.filter(function (c) { return !q || c.name.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q); });
     if (sort === 'A-Z') list.sort(function (a, b) { return a.name.localeCompare(b.name, 'zh'); });
     if (sort === '收藏') list.sort(function (a, b) { return (b.fav ? 1 : 0) - (a.fav ? 1 : 0); });
@@ -868,6 +932,37 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
   $('#send-btn').addEventListener('click', send);
   $('#chat-input').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+
+  /* ============ 自研下拉 ============ */
+  document.querySelectorAll('[data-select]').forEach(function (sel) {
+    var trigger = sel.querySelector('.select-trigger');
+    var options = sel.querySelectorAll('.select-option');
+    var value = sel.querySelector('.sel-value');
+    function open() { sel.classList.add('open'); trigger.setAttribute('aria-expanded', 'true'); }
+    function close() { sel.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); }
+    function select(opt) {
+      options.forEach(function (o) { o.classList.remove('selected'); });
+      opt.classList.add('selected');
+      value.textContent = opt.getAttribute('data-value');
+      close();
+      if (sel.id === 'char-sort') renderChars();
+    }
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      sel.classList.contains('open') ? close() : open();
+    });
+    options.forEach(function (opt) {
+      opt.addEventListener('click', function (e) {
+        e.stopPropagation();
+        select(opt);
+      });
+    });
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel.classList.contains('open') ? close() : open(); }
+      if (e.key === 'Escape') close();
+    });
+    document.addEventListener('click', function (e) { if (!sel.contains(e.target)) close(); });
   });
 
   /* ============ 初始化 ============ */
