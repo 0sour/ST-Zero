@@ -301,6 +301,14 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 .modal-header { display: flex; align-items: center; gap: 8px; padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--font); }
 .modal-header .spacer { flex: 1; }
 .modal-body { padding: 20px; overflow-y: auto; font-size: 13.5px; color: var(--text-2); }
+/* 设置弹窗两栏布局 */
+.set-nav { width: 120px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 8px; overflow-y: auto; }
+.set-nav-item { padding: 8px 10px; border-radius: var(--radius-sm); font-size: 12.5px; color: var(--text-2); cursor: pointer; transition: all var(--transition); margin-bottom: 2px; }
+.set-nav-item:hover { background: var(--bg-2); color: var(--text-1); }
+.set-nav-item.active { background: var(--accent-soft); color: var(--accent); }
+.set-content { flex: 1; padding: 16px; overflow-y: auto; }
+.set-panel { display: none; }
+.set-panel.active { display: block; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
 .toast-wrap { position: fixed; top: 16px; right: 16px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
 .toast { display: flex; align-items: center; gap: 10px; min-width: 260px; max-width: 360px; padding: 12px 16px; background: var(--bg-1); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow-lg); font-size: 13px; animation: toast-in 0.25s ease; }
@@ -633,9 +641,16 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       <div class="spacer"></div>
       <button class="icon-btn" id="settings-close"><svg class="ic"><use href="#i-x"/></svg></button>
     </div>
-    <div class="modal-body">
-
-          <div class="section-title">后端连接</div>
+    <div class="modal-body" style="display:flex;padding:0;height:560px">
+      <div class="set-nav">
+<div class="set-nav-item active" data-set-tab="0">后端连接</div>
+<div class="set-nav-item" data-set-tab="1">背景</div>
+<div class="set-nav-item" data-set-tab="2">Persona</div>
+<div class="set-nav-item" data-set-tab="3">主题色</div>
+<div class="set-nav-item" data-set-tab="4">遮罩</div>
+      </div>
+      <div class="set-content">
+<div class="set-panel active" data-set-panel="0">          <div class="section-title">后端连接</div>
           <div class="field">
             <label class="field-label">后端类型</label>
             <div class="select" data-select id="backend-type">
@@ -664,7 +679,8 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
           <div class="btn-row">
             <button class="btn primary" id="btn-save-settings">保存设置</button>
           </div>
-
+</div>
+<div class="set-panel" data-set-panel="1">
           <div class="section-title">背景</div>
           <div class="bg-presets">
             <button class="bg-preset" data-bg="0" title="默认"></button>
@@ -676,7 +692,8 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             <button class="btn" id="bg-upload">上传背景图</button>
             <button class="btn" id="bg-clear">清除</button>
             <input type="file" id="bg-file" accept="image/*" hidden>
-          </div>
+          </div></div>
+<div class="set-panel" data-set-panel="2">
           <div class="section-title">Persona</div>
           <div class="field">
             <label class="field-label">角色名</label>
@@ -688,14 +705,16 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
           </div>
           <div class="btn-row">
             <button class="btn primary" id="btn-save-persona">保存 Persona</button>
-          </div>
+          </div></div>
+<div class="set-panel" data-set-panel="3">
           <div class="section-title">主题色</div>
           <div class="theme-swatches">
             <button class="theme-swatch active" data-theme="0" title="深棕" style="background:#14100c"></button>
             <button class="theme-swatch" data-theme="1" title="暖褐" style="background:#23190f"></button>
             <button class="theme-swatch" data-theme="2" title="暗绿" style="background:#0c1610"></button>
             <button class="theme-swatch" data-theme="3" title="暗红" style="background:#1e0c0a"></button>
-          </div>
+          </div></div>
+<div class="set-panel" data-set-panel="4">
           <div class="section-title">遮罩</div>
           <div class="field">
             <label class="field-label">模糊</label>
@@ -719,6 +738,8 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             </div>
           </div>
         
+</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1376,6 +1397,14 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     });
   });
   $('#settings-close').addEventListener('click', function () { $('#settings-overlay').classList.remove('show'); });
+  $$('.set-nav-item').forEach(function (item) {
+    item.addEventListener('click', function () {
+      $$('.set-nav-item').forEach(function (i) { i.classList.remove('active'); });
+      $$('.set-panel').forEach(function (p) { p.classList.remove('active'); });
+      item.classList.add('active');
+      document.querySelector('.set-panel[data-set-panel="' + item.getAttribute('data-set-tab') + '"]').classList.add('active');
+    });
+  });
   $('#settings-overlay').addEventListener('click', function (e) { if (e.target === $('#settings-overlay')) $('#settings-overlay').classList.remove('show'); });
 
   /* ============ 自研下拉选择 ============ */
