@@ -140,7 +140,52 @@ var api = {
   adminDeleteUser: function (id) {
     return request('DELETE', '/admin/users/' + id);
   },
+
+  // 正则
+  listRegex: function () {
+    return request('GET', '/regex');
+  },
+  createRegex: function (data) {
+    return request('POST', '/regex', data);
+  },
+  updateRegex: function (id, data) {
+    return request('PUT', '/regex/' + id, data);
+  },
+  deleteRegex: function (id) {
+    return request('DELETE', '/regex/' + id);
+  },
+  importRegex: function (data) {
+    return request('POST', '/regex/import', data);
+  },
+
+  // 预设
+  listPresets: function () {
+    return request('GET', '/presets');
+  },
+  savePreset: function (data) {
+    return request('POST', '/presets', data);
+  },
+  activatePreset: function (name) {
+    return request('POST', '/presets/' + encodeURIComponent(name) + '/activate');
+  },
+  deletePreset: function (name) {
+    return request('DELETE', '/presets/' + encodeURIComponent(name));
+  },
+
+  // 聊天导入导出
+  exportChat: function (id) {
+    return fetch(API_BASE + '/chats/' + id + '/export', {
+      headers: token ? { Authorization: 'Bearer ' + token } : {},
+    }).then(function (res) {
+      if (!res.ok) throw new Error('导出失败');
+      return res.text();
+    });
+  },
+  importChat: function (characterId, content) {
+    return request('POST', '/chats/import', { character_id: characterId, content: content });
+  },
 };
+
 
 /** 角色卡图片 URL */
 function avatarUrl(path) {

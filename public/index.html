@@ -499,6 +499,23 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             <label class="field-label">首条消息</label>
             <textarea id="edit-first"></textarea>
           </div>
+          <div class="field">
+            <label class="field-label">示例对话</label>
+            <textarea id="edit-example" placeholder="&lt;START&gt;\n{{user}}: ...\n{{char}}: ..."></textarea>
+          </div>
+          <div class="field">
+            <label class="field-label">备选问候语</label>
+            <div id="greetings-list"></div>
+            <button class="btn btn-sm" id="btn-add-greeting" style="margin-top:6px"><svg class="ic"><use href="#i-plus"/></svg> 添加问候语</button>
+          </div>
+          <div class="field">
+            <label class="field-label">标签</label>
+            <div id="edit-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <input id="edit-tag-input" placeholder="输入标签名" style="flex:1">
+              <button class="btn btn-sm" id="btn-add-tag">添加</button>
+            </div>
+          </div>
           <div class="btn-row">
             <button class="btn primary" id="btn-save-char">保存</button>
             <button class="btn" id="btn-export-char"><svg class="ic"><use href="#i-download"/></svg> 导出</button>
@@ -512,12 +529,17 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             <button class="btn primary" style="flex:1" id="btn-new-world"><svg class="ic"><use href="#i-plus"/></svg> 新建世界书</button>
           </div>
           <div class="wi-list" id="world-list"></div>
+          <div class="btn-row" style="margin-top:10px">
+            <button class="btn" id="btn-import-world" style="flex:1"><svg class="ic"><use href="#i-upload"/></svg> 导入</button>
+            <button class="btn" id="btn-export-world" style="flex:1"><svg class="ic"><use href="#i-download"/></svg> 导出</button>
+          </div>
         </div>
 
         <!-- 正则 -->
         <div class="rp-panel" id="panel-regex">
           <div class="btn-row" style="margin-bottom:10px">
             <button class="btn primary" style="flex:1" id="btn-new-regex"><svg class="ic"><use href="#i-plus"/></svg> 新建脚本</button>
+            <button class="btn" id="btn-import-regex" title="导入"><svg class="ic"><use href="#i-upload"/></svg></button>
           </div>
           <div id="regex-list"></div>
         </div>
@@ -538,6 +560,10 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
               </div>
             </div>
           </div>
+          <div class="btn-row" style="margin-bottom:10px">
+            <button class="btn primary" style="flex:1" id="btn-save-preset"><svg class="ic"><use href="#i-check"/></svg> 保存预设</button>
+            <button class="btn" id="btn-del-preset" title="删除预设"><svg class="ic"><use href="#i-trash"/></svg></button>
+          </div>
           <div class="section-title">采样参数</div>
           <div class="field">
             <label class="field-label">Temperature</label>
@@ -552,6 +578,19 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
               <input type="range" id="top-p" min="0" max="1" step="0.01" value="0.95">
               <input type="number" id="top-p-num" value="0.95" step="0.01" style="width:60px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text-1);font-size:12px">
             </div>
+          </div>
+          <div class="section-title">指令模板</div>
+          <div class="field">
+            <label class="field-label">Input Sequence</label>
+            <input id="instruct-input" value="&lt;|im_start|&gt;user">
+          </div>
+          <div class="field">
+            <label class="field-label">Output Sequence</label>
+            <input id="instruct-output" value="&lt;|im_start|&gt;assistant">
+          </div>
+          <div class="field">
+            <label class="field-label">Stop Sequence</label>
+            <input id="instruct-stop" value="&lt;|im_end|&gt;">
           </div>
 
         </div>
@@ -747,6 +786,8 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     loadCharacters();
     loadWorlds();
     loadSettings();
+    loadRegex();
+    loadPresets();
   }
 
   /* ============ 角色卡 ============ */
@@ -798,6 +839,11 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         $('#edit-personality').value = card.data.personality || '';
         $('#edit-scenario').value = card.data.scenario || '';
         $('#edit-first').value = card.data.first_mes || '';
+        $('#edit-example').value = card.data.mes_example || '';
+        greetings = (card.data.alternate_greetings || []).slice();
+        editTags = (card.data.tags || []).slice();
+        renderGreetings();
+        renderEditTags();
       }
     }).catch(function () {});
     // 加载该角色的聊天列表
@@ -1077,6 +1123,9 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       personality: $('#edit-personality').value.trim(),
       scenario: $('#edit-scenario').value.trim(),
       first_mes: $('#edit-first').value.trim(),
+      mes_example: $('#edit-example').value.trim(),
+      alternate_greetings: greetings.filter(function (g) { return g.trim(); }),
+      tags: editTags,
     }).then(function () {
       toast('success', 'i-check', '角色已保存');
       loadCharacters();
@@ -1104,7 +1153,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         return '<div class="wi-item" data-id="' + c.id + '"><div class="wi-k">' + esc(c.title || '未命名') + '</div><div class="wi-c">' + new Date(c.updated_at).toLocaleString('zh-CN') + '</div></div>';
       }).join('') || '<div class="empty"><div class="empty-title">暂无聊天</div></div>';
       openModal('聊天管理 · ' + esc(state.currentChar.name), listHtml,
-        '<button class="btn" onclick="closeModal()">关闭</button><button class="btn primary" id="modal-new-chat">新建聊天</button>');
+        '<button class="btn" id="btn-export-chat"><svg class="ic"><use href="#i-download"/></svg> 导出</button><button class="btn" onclick="closeModal()">关闭</button><button class="btn primary" id="modal-new-chat">新建聊天</button>');
       $$('#modal-body .wi-item').forEach(function (el) {
         el.addEventListener('click', function () {
           loadChat(el.getAttribute('data-id'));
@@ -1264,6 +1313,312 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
   $('#modal-close').addEventListener('click', closeModal);
   $('#modal-overlay').addEventListener('click', function (e) { if (e.target === $('#modal-overlay')) closeModal(); });
   window.closeModal = closeModal;
+
+  /* ============ 角色字段扩展 ============ */
+  var greetings = [];
+  var editTags = [];
+  function renderGreetings() {
+    var list = $('#greetings-list');
+    if (!list) return;
+    list.innerHTML = greetings.map(function (g, i) {
+      return '<div style="display:flex;gap:6px;margin-bottom:6px"><input class="greeting-input" data-idx="' + i + '" value="' + esc(g) + '" style="flex:1;background:rgba(var(--bg-2-rgb),var(--ctrl-alpha));border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text-1);font-size:12.5px"><button class="icon-btn danger" data-del-greeting="' + i + '" title="删除"><svg class="ic"><use href="#i-x"/></svg></button></div>';
+    }).join('');
+    $$('#greetings-list .greeting-input').forEach(function (inp) {
+      inp.addEventListener('input', function () { greetings[parseInt(inp.getAttribute('data-idx'))] = inp.value; });
+    });
+    $$('#greetings-list [data-del-greeting]').forEach(function (btn) {
+      btn.addEventListener('click', function () { greetings.splice(parseInt(btn.getAttribute('data-del-greeting')), 1); renderGreetings(); });
+    });
+  }
+  function renderEditTags() {
+    var box = $('#edit-tags');
+    if (!box) return;
+    box.innerHTML = editTags.map(function (t) {
+      return '<span class="tag tag-accent">' + esc(t) + ' <svg class="ic" data-del-tag="' + esc(t) + '" style="cursor:pointer"><use href="#i-x"/></svg></span>';
+    }).join('');
+    $$('#edit-tags [data-del-tag]').forEach(function (ic) {
+      ic.addEventListener('click', function () { editTags = editTags.filter(function (t) { return t !== ic.getAttribute('data-del-tag'); }); renderEditTags(); });
+    });
+  }
+  $('#btn-add-greeting').addEventListener('click', function () { greetings.push(''); renderGreetings(); });
+  $('#btn-add-tag').addEventListener('click', function () {
+    var v = $('#edit-tag-input').value.trim();
+    if (v && editTags.indexOf(v) === -1) { editTags.push(v); renderEditTags(); }
+    $('#edit-tag-input').value = '';
+  });
+  $('#edit-tag-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); $('#btn-add-tag').click(); }
+  });
+
+  /* ============ 世界书条目编辑 ============ */
+  function openWorldEditor(id) {
+    api.getWorld(id).then(function (data) {
+      state.currentWorld = { id: id, data: data.data };
+      renderWorldEntries();
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  }
+  function renderWorldEntries() {
+    var w = state.currentWorld;
+    if (!w) return;
+    var entries = w.data.entries || {};
+    var listHtml = Object.values(entries).map(function (e, i) {
+      return '<div class="wi-item" style="display:flex;align-items:center;gap:8px">' +
+        '<div style="flex:1;min-width:0"><div class="wi-k">' + esc((e.key || []).join(', ')) + '</div><div class="wi-c">' + esc(e.content || '') + '</div></div>' +
+        '<button class="icon-btn" data-edit-entry="' + i + '" title="编辑"><svg class="ic"><use href="#i-pencil"/></svg></button>' +
+        '<button class="icon-btn danger" data-del-entry="' + i + '" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>' +
+      '</div>';
+    }).join('') || '<div class="empty"><div class="empty-title">暂无条目</div></div>';
+    openModal('世界书 · ' + esc(w.data.name || ''), listHtml,
+      '<button class="btn" id="modal-add-entry"><svg class="ic"><use href="#i-plus"/></svg> 新增条目</button><button class="btn" onclick="closeModal()">关闭</button>');
+    $$('#modal-body [data-edit-entry]').forEach(function (btn) {
+      btn.addEventListener('click', function () { openEntryEditor(parseInt(btn.getAttribute('data-edit-entry'))); });
+    });
+    $$('#modal-body [data-del-entry]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.getAttribute('data-del-entry'));
+        var entriesArr = Object.values(w.data.entries || {});
+        var uid = entriesArr[idx].uid;
+        delete w.data.entries[String(uid)];
+        saveWorld();
+      });
+    });
+    $('#modal-add-entry').addEventListener('click', function () { openEntryEditor(-1); });
+  }
+  function openEntryEditor(idx) {
+    var w = state.currentWorld;
+    var entriesArr = Object.values(w.data.entries || {});
+    var e = idx >= 0 ? entriesArr[idx] : { key: [], content: '', order: 100, constant: false };
+    openModal('编辑条目',
+      '<div class="field"><label class="field-label">关键词（逗号分隔）</label><input id="entry-keys" value="' + esc((e.key || []).join(', ')) + '"></div>' +
+      '<div class="field"><label class="field-label">内容</label><textarea id="entry-content" style="min-height:100px">' + esc(e.content || '') + '</textarea></div>' +
+      '<div class="field"><label class="field-label">插入顺序</label><input id="entry-order" type="number" value="' + (e.order ?? 100) + '"></div>' +
+      '<div class="check-row"><input type="checkbox" id="entry-constant" ' + (e.constant ? 'checked' : '') + '> 常驻（无需关键词）</div>',
+      '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-save-entry">保存</button>');
+    $('#modal-save-entry').addEventListener('click', function () {
+      var keys = $('#entry-keys').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      var content = $('#entry-content').value;
+      var order = parseInt($('#entry-order').value) || 100;
+      var constant = $('#entry-constant').checked;
+      var entries = w.data.entries || {};
+      if (idx >= 0) {
+        var uid = Object.values(entries)[idx].uid;
+        entries[String(uid)] = { ...entries[String(uid)], key: keys, content: content, order: order, constant: constant };
+      } else {
+        var newUid = Math.max(0, ...Object.keys(entries).map(Number)) + 1;
+        entries[String(newUid)] = { uid: newUid, key: keys, content: content, order: order, constant: constant };
+      }
+      saveWorld();
+    });
+  }
+  function saveWorld() {
+    var w = state.currentWorld;
+    api.updateWorld(w.id, w.data).then(function () {
+      closeModal();
+      loadWorlds();
+      toast('success', 'i-check', '世界书已保存');
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  }
+  $('#btn-import-world').addEventListener('click', function () {
+    openModal('导入世界书', '<div class="field"><label class="field-label">粘贴世界书 JSON</label><textarea id="import-world-json" style="min-height:150px" placeholder="{...}"></textarea></div>',
+      '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-import-world">导入</button>');
+    $('#modal-import-world').addEventListener('click', function () {
+      try {
+        var json = JSON.parse($('#import-world-json').value);
+        fetch('/api/worlds/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+          body: JSON.stringify(json),
+        }).then(function (res) { return res.json(); }).then(function () {
+          closeModal(); loadWorlds(); toast('success', 'i-check', '世界书已导入');
+        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+      } catch (e) { toast('danger', 'i-alert', 'JSON 格式错误'); }
+    });
+  });
+
+  /* ============ 正则编辑 ============ */
+  function loadRegex() {
+    api.listRegex().then(function (data) {
+      state.regexScripts = data.scripts;
+      renderRegex();
+    }).catch(function () {});
+  }
+  function renderRegex() {
+    var scripts = state.regexScripts;
+    if (!scripts.length) {
+      $('#regex-list').innerHTML = '<div class="empty"><div class="empty-icon"><svg class="ic"><use href="#i-wrench"/></svg></div><div class="empty-title">暂无正则脚本</div></div>';
+      return;
+    }
+    $('#regex-list').innerHTML = scripts.map(function (s, i) {
+      return '<div class="rx-item"><div class="rx-name">' + esc(s.scriptName || '脚本 ' + (i + 1)) + '</div>' +
+        '<button class="icon-btn" data-edit-rx="' + i + '" title="编辑"><svg class="ic"><use href="#i-pencil"/></svg></button>' +
+        '<button class="icon-btn danger" data-del-rx="' + i + '" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>' +
+        '<div class="' + (s.disabled ? 'rx-off' : 'rx-on') + '" data-toggle-rx="' + i + '"></div></div>';
+    }).join('');
+    $$('#regex-list [data-edit-rx]').forEach(function (btn) {
+      btn.addEventListener('click', function () { openRegexEditor(parseInt(btn.getAttribute('data-edit-rx'))); });
+    });
+    $$('#regex-list [data-del-rx]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var s = state.regexScripts[parseInt(btn.getAttribute('data-del-rx'))];
+        api.deleteRegex(s.id).then(function () { loadRegex(); toast('success', 'i-check', '已删除'); });
+      });
+    });
+    $$('#regex-list [data-toggle-rx]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var s = state.regexScripts[parseInt(el.getAttribute('data-toggle-rx'))];
+        s.disabled = !s.disabled;
+        api.updateRegex(s.id, { disabled: s.disabled }).then(function () { loadRegex(); });
+      });
+    });
+  }
+  function openRegexEditor(idx) {
+    var s = idx >= 0 ? state.regexScripts[idx] : { scriptName: '', findRegex: '', replaceString: '', trimStrings: [], placement: [1, 2], disabled: false, markdownOnly: false, promptOnly: false, runOnEdit: false, substituteRegex: 0, minDepth: null, maxDepth: null };
+    openModal('正则脚本',
+      '<div class="field"><label class="field-label">脚本名</label><input id="rx-name" value="' + esc(s.scriptName) + '"></div>' +
+      '<div class="field"><label class="field-label">查找</label><input id="rx-find" value="' + esc(s.findRegex) + '" placeholder="/pattern/flags"></div>' +
+      '<div class="field"><label class="field-label">替换为</label><textarea id="rx-replace" style="min-height:60px">' + esc(s.replaceString) + '</textarea></div>' +
+      '<div class="field"><label class="field-label">作用位置</label><div style="display:flex;gap:12px;flex-wrap:wrap">' +
+        '<label class="check-row"><input type="checkbox" data-rx-pos="1" ' + (s.placement.indexOf(1) >= 0 ? 'checked' : '') + '> 用户输入</label>' +
+        '<label class="check-row"><input type="checkbox" data-rx-pos="2" ' + (s.placement.indexOf(2) >= 0 ? 'checked' : '') + '> AI 输出</label>' +
+        '<label class="check-row"><input type="checkbox" data-rx-pos="5" ' + (s.placement.indexOf(5) >= 0 ? 'checked' : '') + '> 世界书</label>' +
+      '</div></div>' +
+      '<div class="check-row"><input type="checkbox" id="rx-disabled" ' + (s.disabled ? 'checked' : '') + '> 禁用</div>' +
+      '<div class="check-row"><input type="checkbox" id="rx-prompt-only" ' + (s.promptOnly ? 'checked' : '') + '> 仅影响提示词</div>',
+      '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-save-rx">保存</button>');
+    $('#modal-save-rx').addEventListener('click', function () {
+      var placement = [];
+      $$('[data-rx-pos]').forEach(function (cb) { if (cb.checked) placement.push(parseInt(cb.getAttribute('data-rx-pos'))); });
+      var data = {
+        scriptName: $('#rx-name').value.trim() || '未命名脚本',
+        findRegex: $('#rx-find').value,
+        replaceString: $('#rx-replace').value,
+        placement: placement.length ? placement : [1, 2],
+        disabled: $('#rx-disabled').checked,
+        promptOnly: $('#rx-prompt-only').checked,
+      };
+      var p = idx >= 0 ? api.updateRegex(state.regexScripts[idx].id, data) : api.createRegex(data);
+      p.then(function () { closeModal(); loadRegex(); toast('success', 'i-check', '正则已保存'); })
+        .catch(function (e) { toast('danger', 'i-alert', e.message); });
+    });
+  }
+  $('#btn-new-regex').addEventListener('click', function () { openRegexEditor(-1); });
+  $('#btn-import-regex').addEventListener('click', function () {
+    openModal('导入正则', '<div class="field"><label class="field-label">粘贴正则 JSON</label><textarea id="import-regex-json" style="min-height:150px" placeholder="[{...}]"></textarea></div>',
+      '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-import-rx">导入</button>');
+    $('#modal-import-rx').addEventListener('click', function () {
+      try {
+        var json = JSON.parse($('#import-regex-json').value);
+        api.importRegex(json).then(function () { closeModal(); loadRegex(); toast('success', 'i-check', '正则已导入'); })
+          .catch(function (e) { toast('danger', 'i-alert', e.message); });
+      } catch (e) { toast('danger', 'i-alert', 'JSON 格式错误'); }
+    });
+  });
+
+  /* ============ 预设持久化 ============ */
+  function loadPresets() {
+    api.listPresets().then(function (data) {
+      state.presets = data.presets;
+      var menu = document.querySelector('#preset-select .select-menu');
+      if (menu) {
+        menu.innerHTML = data.presets.map(function (p) {
+          return '<div class="select-option' + (p.name === data.active ? ' selected' : '') + '" data-value="' + esc(p.name) + '" role="option">' + esc(p.name) + '<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>';
+        }).join('') || '<div class="select-option" data-value="ChatML · 默认">ChatML · 默认</div>';
+        var value = document.querySelector('#preset-select .sel-value');
+        if (data.active) value.textContent = data.active;
+        // 重新绑定选项点击
+        menu.querySelectorAll('.select-option').forEach(function (opt) {
+          opt.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.querySelectorAll('.select-option').forEach(function (o) { o.classList.remove('selected'); });
+            opt.classList.add('selected');
+            value.textContent = opt.getAttribute('data-value');
+            document.querySelector('#preset-select').classList.remove('open');
+            api.activatePreset(opt.getAttribute('data-value')).then(function () { toast('success', 'i-check', '预设已激活'); });
+          });
+        });
+      }
+    }).catch(function () {});
+  }
+  $('#btn-save-preset').addEventListener('click', function () {
+    var name = document.querySelector('#preset-select .sel-value').textContent;
+    api.savePreset({
+      name: name,
+      sampling: { temperature: parseFloat($('#temp').value), topP: parseFloat($('#top-p').value), topK: 40 },
+      instruct: {
+        input_sequence: $('#instruct-input').value,
+        output_sequence: $('#instruct-output').value,
+        stop_sequence: $('#instruct-stop').value,
+      },
+    }).then(function () { loadPresets(); toast('success', 'i-check', '预设已保存'); })
+      .catch(function (e) { toast('danger', 'i-alert', e.message); });
+  });
+  $('#btn-del-preset').addEventListener('click', function () {
+    var name = document.querySelector('#preset-select .sel-value').textContent;
+    api.deletePreset(name).then(function () { loadPresets(); toast('success', 'i-check', '预设已删除'); })
+      .catch(function (e) { toast('danger', 'i-alert', e.message); });
+  });
+
+  /* ============ 管理面板完整 ============ */
+  $('#um-admin').addEventListener('click', function () {
+    api.adminUsers().then(function (data) {
+      var listHtml = data.users.map(function (u) {
+        return '<div class="wi-item" style="display:flex;align-items:center;gap:8px">' +
+          '<div style="flex:1;min-width:0"><div class="wi-k">' + esc(u.username) + ' <span class="tag ' + (u.role === 'admin' ? 'tag-accent' : '') + '">' + esc(u.role) + '</span></div>' +
+          '<div class="wi-c">' + esc(u.display_name || '') + ' · ' + (u.enabled ? '启用' : '禁用') + '</div></div>' +
+          (u.role !== 'admin' ? '<button class="icon-btn" data-promote="' + u.id + '" title="提升为管理员"><svg class="ic"><use href="#i-chevron-up"/></svg></button>' : '') +
+          (u.enabled ? '<button class="icon-btn" data-disable="' + u.id + '" title="禁用"><svg class="ic"><use href="#i-x"/></svg></button>' : '<button class="icon-btn" data-enable="' + u.id + '" title="启用"><svg class="ic"><use href="#i-check"/></svg></button>') +
+          '<button class="icon-btn danger" data-del-user="' + u.id + '" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>' +
+        '</div>';
+      }).join('');
+      openModal('管理面板 · 用户管理', listHtml,
+        '<button class="btn primary" id="modal-add-user"><svg class="ic"><use href="#i-plus"/></svg> 创建用户</button><button class="btn" onclick="closeModal()">关闭</button>');
+      $$('#modal-body [data-promote]').forEach(function (btn) {
+        btn.addEventListener('click', function () { api.adminUpdateUser(btn.getAttribute('data-promote'), { role: 'admin' }).then(function () { $('#um-admin').click(); }); });
+      });
+      $$('#modal-body [data-disable]').forEach(function (btn) {
+        btn.addEventListener('click', function () { api.adminUpdateUser(btn.getAttribute('data-disable'), { enabled: false }).then(function () { $('#um-admin').click(); }); });
+      });
+      $$('#modal-body [data-enable]').forEach(function (btn) {
+        btn.addEventListener('click', function () { api.adminUpdateUser(btn.getAttribute('data-enable'), { enabled: true }).then(function () { $('#um-admin').click(); }); });
+      });
+      $$('#modal-body [data-del-user]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!confirm('确定删除该用户吗？')) return;
+          api.adminDeleteUser(btn.getAttribute('data-del-user')).then(function () { $('#um-admin').click(); });
+        });
+      });
+      $('#modal-add-user').addEventListener('click', function () {
+        openModal('创建用户',
+          '<div class="field"><label class="field-label">用户名</label><input id="new-user-name"></div>' +
+          '<div class="field"><label class="field-label">密码</label><input id="new-user-pass" type="password"></div>' +
+          '<div class="field"><label class="field-label">显示名</label><input id="new-user-display"></div>' +
+          '<div class="field"><label class="field-label">角色</label><div class="select" data-select><div class="select-trigger" tabindex="0"><span class="sel-value">user</span><span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span></div><div class="select-menu"><div class="select-option selected" data-value="user">user</div><div class="select-option" data-value="admin">admin</div></div></div></div>',
+          '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-create-user">创建</button>');
+        $('#modal-create-user').addEventListener('click', function () {
+          api.adminCreateUser({
+            username: $('#new-user-name').value.trim(),
+            password: $('#new-user-pass').value,
+            display_name: $('#new-user-display').value.trim(),
+            role: document.querySelector('#modal-body .select .sel-value').textContent,
+          }).then(function () { $('#um-admin').click(); toast('success', 'i-check', '用户已创建'); })
+            .catch(function (e) { toast('danger', 'i-alert', e.message); });
+        });
+      });
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  });
+
+  /* ============ 聊天增强 ============ */
+  $('#btn-export-chat').addEventListener('click', function () {
+    if (!state.currentChat) return;
+    api.exportChat(state.currentChat.id).then(function (text) {
+      var blob = new Blob([text], { type: 'application/jsonl' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'chat-' + Date.now() + '.jsonl';
+      a.click();
+      toast('success', 'i-check', '聊天已导出');
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  });
 
   /* ============ 启动 ============ */
   if (isLoggedIn()) {

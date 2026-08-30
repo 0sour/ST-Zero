@@ -11,6 +11,8 @@ import { chatsRouter } from './api/chats.js';
 import { worldsRouter } from './api/worlds.js';
 import { settingsRouter } from './api/settings.js';
 import { adminRouter } from './api/admin.js';
+import { regexRouter } from './api/regex.js';
+import { presetsRouter } from './api/presets.js';
 
 /** 种子：单用户模式内置默认管理员；多用户模式首个用户自动 admin */
 function seed() {
@@ -59,6 +61,8 @@ export function createApp() {
   app.use('/api/chats', chatsRouter);
   app.use('/api/worlds', worldsRouter);
   app.use('/api/settings', settingsRouter);
+  app.use('/api/regex', regexRouter);
+  app.use('/api/presets', presetsRouter);
   app.use('/api/admin', adminRouter);
 
   // 404

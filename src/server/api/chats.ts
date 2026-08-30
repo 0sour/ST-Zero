@@ -180,3 +180,38 @@ chatsRouter.delete('/:id', (req, res) => {
   getDb().prepare('DELETE FROM chats WHERE id = ?').run(req.params.id);
   return res.json({ ok: true });
 });
+
+/** 导出聊天记录（JSONL） */
+chatsRouter.get('/:id/export', (req, res) => {
+  const row = getDb().prepare('SELECT * FROM chats WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id);
+  if (!row) return res.status(404).json({ error: 'Chat not found' });
+  const absPath = path.join(config.dataDir, row.file_path as string);
+  const text = fs.readFileSync(absPath, 'utf-8');
+  res.setHeader('Content-Type', 'application/jsonl');
+  res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent((row.title as string) || 'chat')}.jsonl"`);
+  return res.send(text);
+});
+
+/** 导入聊天记录（JSONL 文本） */
+chatsRouter.post('/import', (req, res) => {
+  const { character_id, content } = req.body as { character_id?: string; content?: string };
+  if (!character_id || !content) return res.status(400).json({ error: 'character_id and content are required' });
+  const char = getDb().prepare('SELECT * FROM characters WHERE id = ? AND user_id = ?').get(character_id, req.user!.id);
+  if (!char) return res.status(404).json({ error: 'Character not found' });
+  try {
+    const { header, messages } = parseChatJsonl(content);
+    const id = randomUUID();
+    const now = Date.now();
+    const fileName = `${id}.jsonl`;
+    const relPath = path.join('users', req.user!.id, 'chats', fileName);
+    const absPath = path.join(config.dataDir, relPath);
+    fs.mkdirSync(path.dirname(absPath), { recursive: true });
+    fs.writeFileSync(absPath, serializeChatJsonl(header, messages));
+    getDb()
+      .prepare('INSERT INTO chats (id, user_id, character_id, title, file_path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(id, req.user!.id, character_id, '导入的聊天', relPath, now, now);
+    return res.status(201).json({ id, message_count: messages.length });
+  } catch (e) {
+    return res.status(400).json({ error: 'Import failed: ' + (e as Error).message });
+  }
+});
