@@ -7,7 +7,7 @@
 <style>
 /* ============ 风格 C：沉浸叙事 ============ */
 :root {
-  --bg-image-default: radial-gradient(ellipse at 20% 0%, rgba(214,178,128,.1), transparent 55%), radial-gradient(ellipse at 80% 100%, rgba(129,140,248,.08), transparent 55%));
+  --bg-image-default: #141210);
   --bg-0: #141210;
   --bg-1: #1c1917;
   --bg-2: #262220;
@@ -63,11 +63,9 @@ body { font-family: var(--font-ui); background: #0f0d0b; color: var(--text-1); f
 .ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.125em; flex-shrink: 0; }
 .ic-fill { fill: currentColor; stroke: none; }
 
-.page { display: flex; gap: 24px; padding: 24px; min-height: 100vh; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+.page { min-height: 100vh; }
 .viewport { border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px var(--border), 0 24px 64px rgba(0,0,0,.6); position: relative; background: var(--bg-0); }
-.viewport-label { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 50; font-size: 11px; color: var(--text-3); background: rgba(20,18,16,.85); padding: 2px 10px; border-radius: 20px; border: 1px solid var(--border); }
-.desktop { width: 1100px; height: 700px; display: flex; flex-direction: column; }
-.mobile { width: 390px; height: 780px; display: flex; flex-direction: column; }
+.desktop { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
 
 /* 顶栏 */
 .topbar { height: 50px; display: flex; align-items: center; gap: 16px; padding: 0 18px; background: rgba(28,25,23,1) border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -210,22 +208,6 @@ body { font-family: var(--font-ui); background: #0f0d0b; color: var(--text-1); f
 .role-badge.user { background: rgba(50,45,42,.55); color: var(--text-2); }
 
 /* 移动端 */
-.mobile .topbar { height: 48px; padding: 0 14px; }
-.mobile-body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
-.mobile .chat-messages { padding: 16px 14px; }
-.mobile .msg { max-width: 90%; }
-.mobile .chat-input { padding: 10px; }
-.mobile .input-row textarea { min-height: 40px; font-size: 14px; }
-.mobile .send-btn { width: 40px; height: 40px; }
-.mobile-drawer { position: absolute; top: 0; bottom: 0; width: 300px; background: rgba(28,25,23,1) border-right: 1px solid var(--border); z-index: 40; transform: translateX(-100%); transition: transform .25s; display: flex; flex-direction: column; }
-.mobile-drawer.open { transform: translateX(0); }
-.mobile-overlay { position: absolute; inset: 0; background: rgba(10,8,6,.6); z-index: 30; display: none; }
-.mobile-overlay.show { display: block; }
-.mobile-bottombar { display: flex; border-top: 1px solid var(--border); background: rgba(28,25,23,1) flex-shrink: 0; }
-.mb-tab { flex: 1; height: 52px; border: none; background: transparent; color: var(--text-3); font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; font-family: var(--font-ui); }
-.mb-tab.active { color: var(--accent); }
-.mb-tab svg { width: 18px; height: 18px; }
-.mobile .msg-actions { display: flex; }
 </style>
 </head>
 <body>
@@ -265,8 +247,7 @@ body { font-family: var(--font-ui); background: #0f0d0b; color: var(--text-1); f
 
 <!-- ================= 桌面视图 ================= -->
 <div class="viewport desktop">
-  <div class="viewport-label">桌面 · 沉浸叙事</div>
-  <div class="topbar">
+    <div class="topbar">
     <div class="logo"><div class="logo-badge">S0</div>ST-Zero</div>
     <div class="topbar-search"><svg class="ic"><use href="#i-search"/></svg><input placeholder="搜索角色、世界书、正则…"></div>
     <div class="topbar-actions">
@@ -488,130 +469,11 @@ body { font-family: var(--font-ui); background: #0f0d0b; color: var(--text-1); f
             <input type="range" id="mask-opacity" min="0" max="100" step="1" value="55">
             <input type="number" id="mask-opacity-num" min="0" max="100" step="1" value="55">
           </div>
-        </div>        </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
-<!-- ================= 移动视图 ================= -->
-<div class="viewport mobile">
-  <div class="viewport-label">移动 · 沉浸叙事</div>
-  <div class="topbar">
-    <div class="tb-btn" title="菜单"><svg class="ic"><use href="#i-menu"/></svg></div>
-    <div class="logo" style="font-size:14px"><div class="logo-badge" style="width:22px;height:22px;font-size:11px">S0</div>ST-Zero</div>
-    <div class="topbar-actions">
-      <div class="tb-btn" title="搜索"><svg class="ic"><use href="#i-search"/></svg></div>
-      <div class="tb-btn" title="更多"><svg class="ic"><use href="#i-more"/></svg></div>
-    </div>
-  </div>
-  <div class="mobile-body">
-    <div class="mobile-overlay"></div>
-    <div class="mobile-drawer">
-      <div class="sidebar-header">
-        <button class="sb-btn primary"><svg class="ic"><use href="#i-plus"/></svg> 新建</button>
-        <button class="sb-btn"><svg class="ic"><use href="#i-upload"/></svg> 导入</button>
-      </div>
-      <div class="sidebar-tools">
-        <input placeholder="搜索角色…">
-      </div>
-      <div class="char-list">
-        <div class="char-item active">
-          <div class="char-avatar" style="background:linear-gradient(135deg,#f472b6,#a78bfa)">樱</div>
-          <div class="char-info">
-            <div class="char-name">樱井千夏 <span class="fav"><svg class="ic ic-fill"><use href="#i-star"/></svg></span></div>
-            <div class="char-desc">温柔的高中图书委员</div>
-          </div>
-        </div>
-        <div class="char-item">
-          <div class="char-avatar" style="background:linear-gradient(135deg,#34d399,#22d3ee)">艾</div>
-          <div class="char-info">
-            <div class="char-name">艾尔文·灰烬</div>
-            <div class="char-desc">流亡的骑士团长</div>
-          </div>
-        </div>
-        <div class="char-item">
-          <div class="char-avatar" style="background:linear-gradient(135deg,#fbbf24,#f87171)">N</div>
-          <div class="char-info">
-            <div class="char-name">NOVA-7 <span class="fav"><svg class="ic ic-fill"><use href="#i-star"/></svg></span></div>
-            <div class="char-desc">空间站 AI 助手</div>
-          </div>
-        </div>
-        <div class="char-item">
-          <div class="char-avatar" style="background:linear-gradient(135deg,#818cf8,#c084fc)">白</div>
-          <div class="char-info">
-            <div class="char-name">白狐·玉藻</div>
-            <div class="char-desc">修行千年的狐仙</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="chat-area">
-      <div class="chat-header">
-        <div class="ch-name">樱井千夏</div>
-        <div class="ch-sub">· 放学后的图书馆</div>
-        <div class="spacer"></div>
-        <div class="tb-btn" title="聊天管理"><svg class="ic"><use href="#i-folder"/></svg></div>
-      </div>
-      <div class="chat-messages">
-        <div class="msg">
-          <div class="msg-avatar" style="background:linear-gradient(135deg,#f472b6,#a78bfa)">樱</div>
-          <div class="msg-body">
-            <div class="msg-meta"><span class="m-name">樱井千夏</span><span>14:32</span></div>
-            <div class="msg-bubble">啊，你来了。今天图书馆没什么人，正好可以安静地看书。要一起坐吗？</div>
-          </div>
-        </div>
-        <div class="msg user">
-          <div class="msg-avatar" style="background:linear-gradient(135deg,#d6b280,#a88a5c)">S</div>
-          <div class="msg-body">
-            <div class="msg-meta"><span class="m-name">你</span><span>14:33</span></div>
-            <div class="msg-bubble">好啊！是什么书？</div>
-          </div>
-        </div>
-        <div class="msg">
-          <div class="msg-avatar" style="background:linear-gradient(135deg,#f472b6,#a78bfa)">樱</div>
-          <div class="msg-body">
-            <div class="msg-meta"><span class="m-name">樱井千夏</span><span>14:33</span></div>
-            <div class="msg-bubble">《雾之馆的杀人事件》！作者是最近很火的新人。听说谜底藏在意想不到的地方……</div>
-            <div class="swipe-row">
-              <button class="swipe-btn" title="上一个"><svg class="ic"><use href="#i-chevron-left"/></svg></button>
-              <span class="swipe-count">2/3</span>
-              <button class="swipe-btn" title="下一个"><svg class="ic"><use href="#i-chevron-right"/></svg></button>
-            </div>
-          </div>
-        </div>
-        <div class="msg user">
-          <div class="msg-avatar" style="background:linear-gradient(135deg,#d6b280,#a88a5c)">S</div>
-          <div class="msg-body">
-            <div class="msg-meta"><span class="m-name">你</span><span>14:34</span></div>
-            <div class="msg-bubble">听起来很有意思！那明天我也来图书馆？</div>
-          </div>
-        </div>
-        <div class="msg">
-          <div class="msg-avatar" style="background:linear-gradient(135deg,#f472b6,#a78bfa)">樱</div>
-          <div class="msg-body">
-            <div class="msg-meta"><span class="m-name">樱井千夏</span><span>14:34</span></div>
-            <div class="msg-bubble">嗯！那就说定了。明天下午三点，老位置见。</div>
-            <div class="typing"><span></span><span></span><span></span></div>
-          </div>
-        </div>
-      </div>
-      <div class="chat-input">
-        <div class="input-row">
-          <textarea placeholder="输入消息…"></textarea>
-          <button class="send-btn" title="发送"><svg class="ic"><use href="#i-send"/></svg></button>
-        </div>
-      </div>
-    </div>
-    <div class="mobile-bottombar">
-      <div class="mb-tab active"><svg class="ic"><use href="#i-message"/></svg>聊天</div>
-      <div class="mb-tab"><svg class="ic"><use href="#i-users"/></svg>角色</div>
-      <div class="mb-tab"><svg class="ic"><use href="#i-book"/></svg>世界书</div>
-      <div class="mb-tab"><svg class="ic"><use href="#i-settings"/></svg>设置</div>
-    </div>
-  </div>
-</div>
-
 </div>
 
 <script>
@@ -622,7 +484,7 @@ body { font-family: var(--font-ui); background: #0f0d0b; color: var(--text-1); f
     'linear-gradient(135deg,#0f2027,#203a43,#2c5364)',
     'radial-gradient(ellipse at 20% 20%,#2d1b69,#1a1a2e 60%,#0f0f1a)'
   ];
-  var themes = [('深棕', 'rgba(20,16,12,.55)'), ('暖褐', 'rgba(35,25,15,.55)'), ('暗绿', 'rgba(12,22,16,.55)'), ('暗红', 'rgba(30,12,10,.55)')];
+  var themes = [['深棕', 'rgba(20,16,12,.55)'], ['暖褐', 'rgba(35,25,15,.55)'], ['暗绿', 'rgba(12,22,16,.55)'], ['暗红', 'rgba(30,12,10,.55)']];
   var body = document.body;
   var layer = document.querySelector('.bg-layer');
   function applyBg(v) { body.style.setProperty('--bg-image', v); }
