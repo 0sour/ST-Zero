@@ -1,5 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { config } from './config.js';
 import { initDb, getDb } from './db.js';
@@ -42,6 +43,15 @@ export function createApp() {
 
   // 健康检查
   app.get('/health', (_req, res) => res.json({ ok: true }));
+
+  // 静态文件服务（前端 + 用户文件）
+  app.use(express.static(path.join(process.cwd(), 'public')));
+  app.use('/files', express.static(path.join(config.dataDir), {
+    fallthrough: false,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    },
+  }));
 
   // API 路由
   app.use('/api/auth', authRouter);
