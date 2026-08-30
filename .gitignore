@@ -1,1 +1,19 @@
+# 参考目录（本地开发产物，不纳入版本控制）
 参考/
+
+# 依赖
+node_modules/
+dist/
+
+# 数据（运行时生成）
+data/
+
+# 环境
+.env
+.env.local
+
+# 日志
+*.log
+
+# 系统
+.DS_Store
