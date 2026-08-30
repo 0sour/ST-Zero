@@ -1719,6 +1719,73 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       .catch(function (e) { toast('danger', 'i-alert', e.message); });
   });
 
+  /* ============ 群聊 ============ */
+  var groupMode = false;
+  var currentGroup = null;
+  function loadGroups() {
+    api.listGroups().then(function (data) {
+      state.groups = data.groups;
+      var gl = $('#group-list');
+      if (state.groups.length) {
+        gl.style.display = 'block';
+        gl.innerHTML = '<div style="font-size:11px;color:var(--text-3);margin-bottom:6px;letter-spacing:1px">群聊</div>' +
+          state.groups.map(function (g) {
+            return '<div class="char-item' + (currentGroup && g.id === currentGroup.id ? ' active' : '') + '" data-gid="' + g.id + '" style="padding:6px 8px"><div class="char-info"><div class="char-name" style="font-size:12.5px">' + esc(g.name) + '</div><div class="char-desc">' + (JSON.parse(g.member_ids || '[]').length) + ' 位成员</div></div></div>';
+          }).join('');
+        $$('#group-list .char-item').forEach(function (el) {
+          el.addEventListener('click', function () { openGroup(el.getAttribute('data-gid')); });
+        });
+      } else {
+        gl.style.display = 'none';
+      }
+    }).catch(function () {});
+  }
+  function openGroup(id) {
+    groupMode = true;
+    currentGroup = state.groups.find(function (g) { return g.id === id; });
+    api.getGroup(id).then(function (data) {
+      state.groupMembers = data.members;
+      $('#chat-char-name').textContent = data.group.name;
+      $('#chat-title').textContent = '· 群聊 · ' + data.members.length + ' 位成员';
+      renderChars();
+      loadGroups();
+      api.getGroupMessages(id).then(function (md) {
+        state.messages = md.messages;
+        renderMessages();
+      });
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  }
+  function exitGroup() {
+    groupMode = false;
+    currentGroup = null;
+    $('#group-list').style.display = state.groups && state.groups.length ? 'block' : 'none';
+    if (state.characters.length) selectChar(state.characters[0].id);
+  }
+  $('#btn-groups').addEventListener('click', function () {
+    if (groupMode) { exitGroup(); return; }
+    openModal('群聊',
+      '<div class="field"><label class="field-label">群聊名称</label><input id="group-name" placeholder="群聊名称"></div>' +
+      '<div class="field"><label class="field-label">选择成员</label><div id="group-members" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto">' +
+        state.characters.map(function (ch) {
+          return '<label class="check-row"><input type="checkbox" data-gm="' + ch.id + '"> ' + esc(ch.name) + '</label>';
+        }).join('') +
+      '</div></div>',
+      '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-create-group">创建</button>');
+    $('#modal-create-group').addEventListener('click', function () {
+      var name = $('#group-name').value.trim();
+      var members = [];
+      $$('[data-gm]').forEach(function (cb) { if (cb.checked) members.push(cb.getAttribute('data-gm')); });
+      if (!name) { toast('danger', 'i-alert', '请输入群聊名称'); return; }
+      if (!members.length) { toast('danger', 'i-alert', '请选择至少一位成员'); return; }
+      api.createGroup(name, members).then(function (d) {
+        closeModal();
+        loadGroups();
+        openGroup(d.id);
+        toast('success', 'i-check', '群聊已创建');
+      }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+    });
+  });
+
   /* ============ 管理面板完整 ============ */
   $('#um-admin').addEventListener('click', function () {
     api.adminUsers().then(function (data) {
