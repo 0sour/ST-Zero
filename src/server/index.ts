@@ -14,6 +14,7 @@ import { adminRouter } from './api/admin.js';
 import { regexRouter } from './api/regex.js';
 import { presetsRouter } from './api/presets.js';
 import { quickRepliesRouter } from './api/quick-replies.js';
+import { groupsRouter } from './api/groups.js';
 
 /** 种子：单用户模式内置默认管理员；多用户模式首个用户自动 admin */
 function seed() {
@@ -65,6 +66,7 @@ export function createApp() {
   app.use('/api/regex', regexRouter);
   app.use('/api/presets', presetsRouter);
   app.use('/api/quick-replies', quickRepliesRouter);
+  app.use('/api/groups', groupsRouter);
   app.use('/api/admin', adminRouter);
 
   // 404

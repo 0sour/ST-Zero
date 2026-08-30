@@ -72,6 +72,17 @@ function migrate(d: DatabaseSync) {
     );
     CREATE INDEX IF NOT EXISTS idx_worlds_user ON worlds(user_id);
 
+    CREATE TABLE IF NOT EXISTS groups (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      name TEXT NOT NULL,
+      member_ids TEXT NOT NULL DEFAULT '[]',
+      chat_id TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_groups_user ON groups(user_id, updated_at);
+
     CREATE TABLE IF NOT EXISTS settings (
       user_id TEXT PRIMARY KEY REFERENCES users(id),
       data TEXT NOT NULL DEFAULT '{}'

@@ -187,6 +187,29 @@ var api = {
     return request('DELETE', '/presets/' + encodeURIComponent(name));
   },
 
+  // 群聊
+  listGroups: function () {
+    return request('GET', '/groups');
+  },
+  createGroup: function (name, memberIds) {
+    return request('POST', '/groups', { name: name, member_ids: memberIds });
+  },
+  getGroup: function (id) {
+    return request('GET', '/groups/' + id);
+  },
+  updateGroup: function (id, data) {
+    return request('PUT', '/groups/' + id, data);
+  },
+  deleteGroup: function (id) {
+    return request('DELETE', '/groups/' + id);
+  },
+  getGroupMessages: function (id) {
+    return request('GET', '/groups/' + id + '/messages');
+  },
+  sendGroupMessage: function (id, content, characterId) {
+    return request('POST', '/groups/' + id + '/messages', { content: content, character_id: characterId });
+  },
+
   // 快捷回复
   listQuickReplies: function () {
     return request('GET', '/quick-replies');

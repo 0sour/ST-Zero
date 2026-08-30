@@ -423,6 +423,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       <div class="sidebar-header">
         <button class="sb-btn primary" id="btn-new-char"><svg class="ic"><use href="#i-plus"/></svg> 新建</button>
         <button class="sb-btn" id="btn-import-char"><svg class="ic"><use href="#i-upload"/></svg> 导入</button>
+        <button class="sb-btn" id="btn-groups" title="群聊"><svg class="ic"><use href="#i-users"/></svg></button>
         <input type="file" id="import-file" accept=".png,.json,.yaml,.yml,.charx" hidden>
       </div>
       <div class="sidebar-tools">
@@ -436,6 +437,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
           </div>
         </div>
       </div>
+      <div class="group-list" id="group-list" style="display:none;padding:8px;border-bottom:1px solid var(--border)"></div>
       <div class="char-list" id="char-list"></div>
     </div>
 
@@ -813,6 +815,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     loadSettings();
     loadRegex();
     loadPresets();
+    loadGroups();
   }
 
   /* ============ 角色卡 ============ */
