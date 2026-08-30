@@ -413,7 +413,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         <div class="rp-tab" data-tab="world">世界书</div>
         <div class="rp-tab" data-tab="regex">正则</div>
         <div class="rp-tab" data-tab="preset">预设</div>
-        <div class="rp-tab" data-tab="settings">设置</div>
       </div>
       <div class="rp-body">
         <!-- 角色编辑 -->
@@ -511,7 +510,43 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         </div>
 
         <!-- 设置 -->
-        <div class="rp-panel" id="panel-settings">
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 用户菜单 -->
+<div class="user-menu" id="user-menu">
+  <div class="um-user" id="um-user-info">用户</div>
+  <div class="um-item" id="um-admin" style="display:none"><svg class="ic"><use href="#i-shield"/></svg>管理面板</div>
+  <div class="um-divider"></div>
+  <div class="um-item danger" id="um-logout"><svg class="ic"><use href="#i-logout"/></svg>退出登录</div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="modal-title">标题</span>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="modal-close"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal-overlay" id="settings-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span>设置</span>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="settings-close"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+
           <div class="section-title">背景</div>
           <div class="bg-presets">
             <button class="bg-preset" data-bg="0" title="默认"></button>
@@ -553,30 +588,8 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
               <input type="number" id="panel-opacity-num" min="0" max="100" step="1" value="85" style="width:60px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text-1);font-size:12px">
             </div>
           </div>
-        </div>
-      </div>
+        
     </div>
-  </div>
-</div>
-
-<!-- 用户菜单 -->
-<div class="user-menu" id="user-menu">
-  <div class="um-user" id="um-user-info">用户</div>
-  <div class="um-item" id="um-admin" style="display:none"><svg class="ic"><use href="#i-shield"/></svg>管理面板</div>
-  <div class="um-divider"></div>
-  <div class="um-item danger" id="um-logout"><svg class="ic"><use href="#i-logout"/></svg>退出登录</div>
-</div>
-
-<!-- 弹窗 -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <span id="modal-title">标题</span>
-      <div class="spacer"></div>
-      <button class="icon-btn" id="modal-close"><svg class="ic"><use href="#i-x"/></svg></button>
-    </div>
-    <div class="modal-body" id="modal-body"></div>
-    <div class="modal-footer" id="modal-footer"></div>
   </div>
 </div>
 
@@ -1077,12 +1090,18 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
   $$('[data-tab-btn]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var tab = btn.getAttribute('data-tab-btn');
+      if (tab === 'settings') {
+        $('#settings-overlay').classList.add('show');
+        return;
+      }
       $$('.rp-tab').forEach(function (t) { t.classList.remove('active'); });
       $$('.rp-panel').forEach(function (p) { p.classList.remove('active'); });
       document.querySelector('.rp-tab[data-tab="' + tab + '"]').classList.add('active');
       $('#panel-' + tab).classList.add('active');
     });
   });
+  $('#settings-close').addEventListener('click', function () { $('#settings-overlay').classList.remove('show'); });
+  $('#settings-overlay').addEventListener('click', function (e) { if (e.target === $('#settings-overlay')) $('#settings-overlay').classList.remove('show'); });
 
   /* ============ 排序菜单 ============ */
   var sortMenu = document.querySelector('[data-sort-menu]');

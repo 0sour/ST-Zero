@@ -439,7 +439,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         <div class="rp-tab" data-tab="world">世界书</div>
         <div class="rp-tab" data-tab="regex">正则</div>
         <div class="rp-tab" data-tab="preset">预设</div>
-        <div class="rp-tab" data-tab="settings">设置</div>
       </div>
       <div class="rp-body">
         <!-- 角色编辑 -->
@@ -584,7 +583,46 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
           </div>
 
         <!-- 设置 -->
-        <div class="rp-panel" id="panel-settings">
+        
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="modal-title">新建角色</span>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="modal-close"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="field-label">角色名称</label>
+        <input id="modal-char-name" placeholder="输入角色名称…">
+      </div>
+      <div class="field">
+        <label class="field-label">角色描述</label>
+        <textarea id="modal-char-desc" placeholder="描述角色的性格、背景…" style="min-height:80px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="modal-cancel">取消</button>
+      <button class="btn primary" id="modal-ok">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal-overlay" id="settings-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span>设置</span>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="settings-close"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+
           <div class="section-title">背景</div>
           <div class="bg-presets">
             <button class="bg-preset" data-bg="0" title="默认"></button>
@@ -626,32 +664,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
               <input type="number" id="panel-opacity-num" min="0" max="100" step="1" value="85" style="width:60px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text-1);font-size:12px">
 
         </div>        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- 弹窗 -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <span id="modal-title">新建角色</span>
-      <div class="spacer"></div>
-      <button class="icon-btn" id="modal-close"><svg class="ic"><use href="#i-x"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="field">
-        <label class="field-label">角色名称</label>
-        <input id="modal-char-name" placeholder="输入角色名称…">
-      </div>
-      <div class="field">
-        <label class="field-label">角色描述</label>
-        <textarea id="modal-char-desc" placeholder="描述角色的性格、背景…" style="min-height:80px"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" id="modal-cancel">取消</button>
-      <button class="btn primary" id="modal-ok">创建</button>
+      
     </div>
   </div>
 </div>
@@ -853,13 +866,12 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     });
   });
 
-  /* 顶栏设置按钮 → 设置 tab */
+  /* 顶栏设置按钮 → 设置弹窗 */
   $('#btn-settings').addEventListener('click', function () {
-    $$('.rp-tab').forEach(function (t) { t.classList.remove('active'); });
-    $$('.rp-panel').forEach(function (p) { p.classList.remove('active'); });
-    document.querySelector('.rp-tab[data-tab="settings"]').classList.add('active');
-    $('#panel-settings').classList.add('active');
+    $('#settings-overlay').classList.add('show');
   });
+  $('#settings-close').addEventListener('click', function () { $('#settings-overlay').classList.remove('show'); });
+  $('#settings-overlay').addEventListener('click', function (e) { if (e.target === $('#settings-overlay')) $('#settings-overlay').classList.remove('show'); });
 
   /* ============ 正则开关 ============ */
   $$('[data-toggle]').forEach(function (t) {
