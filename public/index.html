@@ -518,22 +518,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
               <input type="number" id="top-p-num" value="0.95" step="0.01" style="width:60px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text-1);font-size:12px">
             </div>
           </div>
-          <div class="section-title">后端连接</div>
-          <div class="field">
-            <label class="field-label">API 地址</label>
-            <input id="backend-url" placeholder="http://localhost:11434/v1">
-          </div>
-          <div class="field">
-            <label class="field-label">模型</label>
-            <input id="backend-model" placeholder="qwen2.5">
-          </div>
-          <div class="field">
-            <label class="field-label">API Key（可选）</label>
-            <input id="backend-key" type="password" placeholder="sk-...">
-          </div>
-          <div class="btn-row">
-            <button class="btn primary" id="btn-save-settings">保存设置</button>
-          </div>
+
         </div>
 
         <!-- 设置 -->
@@ -573,6 +558,24 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       <button class="icon-btn" id="settings-close"><svg class="ic"><use href="#i-x"/></svg></button>
     </div>
     <div class="modal-body">
+
+          <div class="section-title">后端连接</div>
+
+          <div class="field">
+            <label class="field-label">API 地址</label>
+            <input id="backend-url" placeholder="http://localhost:11434/v1">
+          </div>
+          <div class="field">
+            <label class="field-label">模型</label>
+            <input id="backend-model" placeholder="qwen2.5">
+          </div>
+          <div class="field">
+            <label class="field-label">API Key（可选）</label>
+            <input id="backend-key" type="password" placeholder="sk-...">
+          </div>
+          <div class="btn-row">
+            <button class="btn primary" id="btn-save-settings">保存设置</button>
+          </div>
 
           <div class="section-title">背景</div>
           <div class="bg-presets">
