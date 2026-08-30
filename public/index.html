@@ -710,6 +710,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 <script>
 (function () {
   var $ = function (s) { return document.querySelector(s); };
+  function $on(id, ev, fn) { var el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
 
   /* ============ 状态 ============ */
@@ -1169,6 +1170,17 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
           closeModal();
         });
       });
+      $('#btn-export-chat').addEventListener('click', function () {
+        if (!state.currentChat) return;
+        api.exportChat(state.currentChat.id).then(function (text) {
+          var blob = new Blob([text], { type: 'application/jsonl' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'chat-' + Date.now() + '.jsonl';
+          a.click();
+          toast('success', 'i-check', '聊天已导出');
+        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+      });
     }).catch(function (e) { toast('danger', 'i-alert', e.message); });
   });
 
@@ -1604,19 +1616,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             .catch(function (e) { toast('danger', 'i-alert', e.message); });
         });
       });
-    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-  });
-
-  /* ============ 聊天增强 ============ */
-  $('#btn-export-chat').addEventListener('click', function () {
-    if (!state.currentChat) return;
-    api.exportChat(state.currentChat.id).then(function (text) {
-      var blob = new Blob([text], { type: 'application/jsonl' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'chat-' + Date.now() + '.jsonl';
-      a.click();
-      toast('success', 'i-check', '聊天已导出');
     }).catch(function (e) { toast('danger', 'i-alert', e.message); });
   });
 
