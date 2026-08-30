@@ -53,14 +53,30 @@ export function substituteParams(text: string, ctx: MacroContext): string {
     personality: ctx.personality ?? '',
     scenario: ctx.scenario ?? '',
     persona: ctx.persona ?? '',
-    wiBefore: ctx.wiBefore ?? '',
-    wiAfter: ctx.wiAfter ?? '',
+    wibefore: ctx.wiBefore ?? '',
+    wiafter: ctx.wiAfter ?? '',
     system: ctx.systemPrompt ?? '',
-    ...ctx.custom,
+    ...Object.fromEntries(Object.entries(ctx.custom ?? {}).map(([k, v]) => [k.toLowerCase(), v])),
   };
 
-  // 函数型宏（最多 3 轮嵌套展开）
   let out = text;
+
+  // 先展开内层宏（支持嵌套 {{random:{{char}},X}}）
+  for (let i = 0; i < 3; i++) {
+    let changed = false;
+    out = out.replace(/\{\{([^{}]+)\}\}/g, (full, inner: string) => {
+      const lower = inner.trim().toLowerCase();
+      const v = macros[lower];
+      if (v !== undefined) {
+        changed = true;
+        return v;
+      }
+      return full;
+    });
+    if (!changed) break;
+  }
+
+  // 函数型宏（最多 3 轮嵌套展开）
   for (let round = 0; round < 3; round++) {
     let changed = false;
     out = out.replace(/\{\{([^{}]+)\}\}/g, (full, inner: string) => {

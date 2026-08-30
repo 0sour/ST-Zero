@@ -183,7 +183,7 @@ export function scanWorldInfo(input: WorldInfoScanInput): WorldInfoScanResult {
     }
   }
 
-  // 3. 预算裁剪（按 priority 从小到大，ignoreBudget 豁免）
+  // 3. 预算裁剪（按 priority 从小到大丢弃，ignoreBudget 豁免）
   const budgetTokens = Math.floor((maxContext * settings.budget) / 100);
   let total = activated.reduce((sum, e) => sum + estimateTokens(e.content ?? ''), 0);
   if (total > budgetTokens) {
@@ -195,8 +195,9 @@ export function scanWorldInfo(input: WorldInfoScanInput): WorldInfoScanResult {
         continue;
       }
       const t = estimateTokens(e.content ?? '');
-      if (total - t >= 0 || kept.length === 0) {
+      if (total <= budgetTokens) {
         kept.push(e);
+      } else {
         total -= t;
       }
     }

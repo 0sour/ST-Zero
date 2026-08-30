@@ -102,7 +102,7 @@ export function applyRegex(input: RegexInput, macros: Record<string, string> = {
     finalString = finalString.replace(re, (...args) => {
       const match = args[0] as string;
       const groups = args.slice(1, -2) as string[];
-      let replace = script.replaceString.replace(/{{match}}/gi, '$0');
+      let replace = script.replaceString.replace(/{{match}}/gi, match);
       replace = replace.replace(/\$(\d+)|\$<([^>]+)>/g, (_, num, name) => {
         if (num) return groups[Number(num) - 1] ?? '';
         if (name) {
