@@ -814,6 +814,242 @@ body {
   pointer-events: none;
 }
 @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+/* ============================================================
+   21. 文件上传（自研）
+   ============================================================ */
+.upload-drop {
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.upload-drop:hover, .upload-drop.dragover { border-color: var(--accent); background: var(--accent-soft); }
+.upload-drop .ic { font-size: 26px; color: var(--text-3); margin-bottom: 6px; }
+.upload-drop em { color: var(--accent); font-style: normal; }
+.upload-drop small { display: block; color: var(--text-3); margin-top: 4px; font-size: 11px; }
+.upload-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.upload-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  animation: slide-in-left .25s ease;
+}
+.upload-item .ui-icon { color: var(--accent); font-size: 15px; display: flex; }
+.upload-item .ui-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.upload-item .ui-size { color: var(--text-3); font-family: var(--mono); font-size: 11px; }
+
+/* 22. 多选标签输入（自研） */
+.tag-input-box {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  min-height: 36px;
+  cursor: text;
+  transition: all var(--transition);
+}
+.tag-input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.tag-input-field {
+  flex: 1; min-width: 80px;
+  border: none; outline: none; background: transparent;
+  color: var(--text-1); font-size: 13px;
+  font-family: var(--font-ui);
+  padding: 4px 2px;
+}
+.tag-input-field::placeholder { color: var(--text-3); }
+
+/* 23. 多选下拉（自研） */
+.multiselect { position: relative; }
+.ms-trigger {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+  min-height: 34px;
+  padding: 4px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: text;
+  transition: all var(--transition);
+}
+.ms-trigger:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ms-input {
+  flex: 1; min-width: 60px;
+  border: none; outline: none; background: transparent;
+  color: var(--text-1); font-size: 13px;
+  font-family: var(--font-ui);
+  padding: 3px 2px;
+}
+.ms-arrow { color: var(--text-3); font-size: 12px; display: flex; flex-shrink: 0; transition: transform var(--transition); }
+.multiselect.open .ms-arrow { transform: rotate(180deg); color: var(--accent); }
+.ms-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  z-index: 60;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  max-height: 200px; overflow-y: auto;
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+  transition: all .15s ease;
+}
+.multiselect.open .ms-menu { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.ms-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.ms-option:hover { background: var(--bg-2); color: var(--text-1); }
+.ms-option .ms-check { margin-left: auto; color: var(--accent); display: none; }
+.ms-option.checked { background: var(--accent-soft); color: var(--accent); }
+.ms-option.checked .ms-check { display: flex; }
+
+/* 24. 数字输入（自研） */
+.number-input { display: inline-flex; align-items: stretch; }
+.ni-btn {
+  width: 32px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  transition: all var(--transition);
+}
+.ni-btn:hover { background: var(--accent-soft); color: var(--accent); }
+.ni-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-right: none; }
+.ni-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-left: none; }
+.ni-field {
+  width: 56px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-1);
+  text-align: center;
+  font-family: var(--mono); font-size: 13px;
+  outline: none;
+}
+.ni-field:focus { border-color: var(--accent); }
+
+/* 25. 搜索框清除按钮 */
+.input-clear {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px;
+  border: none;
+  background: var(--bg-3);
+  color: var(--text-2);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 10px;
+  display: none; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.input-clear.show { display: flex; }
+.input-clear:hover { background: var(--accent); color: var(--bg-0); }
+.input-wrap .input { padding-right: 32px; }
+
+/* 26. 右键菜单（自研） */
+.ctx-demo {
+  width: 100%; height: 120px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-1);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text-3); font-size: 13px;
+  user-select: none;
+}
+.ctx-menu {
+  position: fixed; z-index: 400;
+  min-width: 160px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  display: none;
+}
+.ctx-menu.show { display: block; animation: scale-in .15s ease; }
+.ctx-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.ctx-item:hover { background: var(--bg-2); color: var(--text-1); }
+.ctx-item .ic { font-size: 14px; }
+.ctx-item.danger { color: var(--danger); }
+.ctx-item.danger:hover { background: var(--danger-soft); }
+.ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* 27. 分页（自研） */
+.pagination { display: flex; align-items: center; gap: 4px; }
+.page-btn {
+  min-width: 30px; height: 30px; padding: 0 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-1);
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.page-btn:hover { border-color: var(--accent); color: var(--accent); }
+.page-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg-0); font-weight: 600; }
+.page-btn:disabled { opacity: .4; cursor: not-allowed; }
+.page-ellipsis { color: var(--text-3); padding: 0 4px; }
+
+/* 28. 空状态（自研） */
+.empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 20px; text-align: center; }
+.empty-icon {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+.empty-title { font-size: 14px; font-weight: 600; font-family: var(--font); }
+.empty-desc { font-size: 12px; color: var(--text-3); margin-bottom: 8px; }
+
+/* 29. 键帽（自研） */
+.kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; height: 22px; padding: 0 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text-2);
+}
+
+/* 30. 头像（自研） */
+.avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 600;
+  font-family: var(--font);
+}
+.avatar-sm { width: 28px; height: 28px; font-size: 11px; }
+.avatar-lg { width: 56px; height: 56px; font-size: 20px; }
+.avatar-round { border-radius: var(--radius); }
+
 
 
 /* ============================================================
@@ -904,6 +1140,7 @@ body {
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
@@ -1389,6 +1626,169 @@ body {
       </div>
     </div>
 
+
+    <!-- ============ 15. 文件上传 ============ -->
+    <div class="demo-section" id="upload">
+      <div class="section-title">文件上传 Upload</div>
+      <div class="demo-block" style="max-width:420px">
+        <div class="upload" data-upload>
+          <div class="upload-drop">
+            <svg class="ic"><use href="#i-upload"/></svg>
+            <div>拖拽文件到此处，或 <em>点击选择</em></div>
+            <small>支持 PNG / JSON / YAML / CharX</small>
+          </div>
+          <input type="file" hidden multiple>
+          <div class="upload-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 16. 多选标签输入 ============ -->
+    <div class="demo-section" id="taginput">
+      <div class="section-title">多选标签输入 TagInput</div>
+      <div class="demo-block" style="max-width:420px">
+        <label class="field-label">角色标签</label>
+        <div class="tag-input" data-tag-input>
+          <div class="tag-input-box">
+            <span class="tag tag-accent">日常 <svg class="ic"><use href="#i-x"/></svg></span>
+            <span class="tag">校园 <svg class="ic"><use href="#i-x"/></svg></span>
+            <input class="tag-input-field" placeholder="输入后回车添加…">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 17. 多选下拉 ============ -->
+    <div class="demo-section" id="multiselect">
+      <div class="section-title">多选下拉 MultiSelect</div>
+      <div class="demo-block" style="max-width:420px">
+        <label class="field-label">世界书关键词</label>
+        <div class="multiselect" data-multiselect>
+          <div class="ms-trigger">
+            <span class="tag tag-accent">图书馆 <svg class="ic"><use href="#i-x"/></svg></span>
+            <span class="tag">千夏 <svg class="ic"><use href="#i-x"/></svg></span>
+            <input class="ms-input" placeholder="输入或选择…">
+            <span class="ms-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+          </div>
+          <div class="ms-menu">
+            <div class="ms-option checked" data-value="图书馆">图书馆<span class="ms-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+            <div class="ms-option checked" data-value="千夏">千夏<span class="ms-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+            <div class="ms-option" data-value="推理小说">推理小说<span class="ms-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+            <div class="ms-option" data-value="放学后">放学后<span class="ms-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 18. 三态下拉 / 数字输入 / 搜索框 ============ -->
+    <div class="demo-section" id="controls">
+      <div class="section-title">三态下拉 / 数字输入 / 搜索框</div>
+      <div class="demo-block">
+        <div class="demo-grid" style="align-items:flex-start">
+          <div style="width:180px">
+            <label class="field-label">大小写敏感</label>
+            <div class="select" data-select>
+              <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
+                <span class="sel-value">Use global</span>
+                <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+              </div>
+              <div class="select-menu" role="listbox">
+                <div class="select-option selected" data-value="Use global" role="option">Use global<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="Yes" role="option">Yes<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="No" role="option">No<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">扫描深度</label>
+            <div class="number-input" data-number>
+              <button class="ni-btn" data-step="-1"><svg class="ic"><use href="#i-minus"/></svg></button>
+              <input class="ni-field" type="text" value="4">
+              <button class="ni-btn" data-step="1"><svg class="ic"><use href="#i-plus"/></svg></button>
+            </div>
+          </div>
+          <div style="width:240px">
+            <label class="field-label">搜索</label>
+            <div class="input-wrap" data-search>
+              <svg class="ic"><use href="#i-search"/></svg>
+              <input class="input" placeholder="输入关键词…">
+              <button class="input-clear"><svg class="ic"><use href="#i-x"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 19. 右键菜单 ============ -->
+    <div class="demo-section" id="contextmenu">
+      <div class="section-title">右键菜单 ContextMenu</div>
+      <div class="demo-block">
+        <div class="ctx-demo" data-ctx>在此区域点击右键</div>
+      </div>
+    </div>
+
+    <!-- ============ 20. 抽屉 ============ -->
+    <div class="demo-section" id="drawer">
+      <div class="section-title">抽屉 Drawer</div>
+      <div class="demo-block">
+        <button class="btn" id="btn-drawer">打开抽屉</button>
+      </div>
+    </div>
+
+    <!-- ============ 21. 分页 ============ -->
+    <div class="demo-section" id="pagination">
+      <div class="section-title">分页 Pagination</div>
+      <div class="demo-block">
+        <div class="pagination">
+          <button class="page-btn" disabled><svg class="ic"><use href="#i-chevron-left"/></svg></button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <span class="page-ellipsis">…</span>
+          <button class="page-btn">12</button>
+          <button class="page-btn"><svg class="ic"><use href="#i-chevron-right"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 22. 空状态 ============ -->
+    <div class="demo-section" id="empty">
+      <div class="section-title">空状态 Empty</div>
+      <div class="demo-block">
+        <div class="empty">
+          <div class="empty-icon"><svg class="ic"><use href="#i-book"/></svg></div>
+          <div class="empty-title">暂无世界书</div>
+          <div class="empty-desc">点击下方按钮创建第一个世界书</div>
+          <button class="btn btn-primary">新建世界书</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 23. 键帽 / 头像 ============ -->
+    <div class="demo-section" id="misc">
+      <div class="section-title">键帽 / 头像</div>
+      <div class="demo-block">
+        <div class="demo-block-title">键帽</div>
+        <div class="demo-grid">
+          <kbd class="kbd">Enter</kbd>
+          <kbd class="kbd">Shift</kbd>
+          <kbd class="kbd">Ctrl</kbd>
+          <kbd class="kbd">Alt</kbd>
+          <kbd class="kbd">Esc</kbd>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">头像</div>
+        <div class="demo-grid">
+          <div class="avatar avatar-sm">S</div>
+          <div class="avatar">S</div>
+          <div class="avatar avatar-lg">S</div>
+          <div class="avatar avatar-round">S</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#f472b6,#a78bfa);border:none;color:#fff">樱</div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -1412,6 +1812,49 @@ body {
       <button class="btn btn-danger">确认删除</button>
     </div>
   </div>
+</div>
+
+
+<!-- 抽屉 -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <span>世界书 · 雾之馆的世界</span>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="drawer-close"><svg class="ic"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="drawer-body">
+    <div class="field">
+      <label class="field-label">条目名称</label>
+      <input class="input" value="图书馆">
+    </div>
+    <div class="field">
+      <label class="field-label">关键词</label>
+      <div class="tag-input" data-tag-input>
+        <div class="tag-input-box">
+          <span class="tag tag-accent">图书馆 <svg class="ic"><use href="#i-x"/></svg></span>
+          <input class="tag-input-field" placeholder="回车添加…">
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">内容</label>
+      <textarea class="textarea" placeholder="激活时注入的内容…"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary">保存</button>
+      <button class="btn">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 右键菜单 -->
+<div class="ctx-menu" id="ctx-menu">
+  <div class="ctx-item"><svg class="ic"><use href="#i-pencil"/></svg>编辑</div>
+  <div class="ctx-item"><svg class="ic"><use href="#i-copy"/></svg>复制</div>
+  <div class="ctx-item"><svg class="ic"><use href="#i-star"/></svg>收藏</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item danger"><svg class="ic"><use href="#i-trash"/></svg>删除</div>
 </div>
 
 <!-- Toast 容器 -->
@@ -1554,6 +1997,132 @@ body {
       setTimeout(function () { ripple.remove(); }, 600);
     });
   });
+  /* 文件上传 */
+  document.querySelectorAll('[data-upload]').forEach(function (up) {
+    var drop = up.querySelector('.upload-drop');
+    var input = up.querySelector('input[type=file]');
+    var list = up.querySelector('.upload-list');
+    function addFiles(files) {
+      Array.prototype.forEach.call(files, function (f) {
+        var item = document.createElement('div');
+        item.className = 'upload-item';
+        var size = f.size > 1024 * 1024 ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : Math.ceil(f.size / 1024) + ' KB';
+        item.innerHTML = '<span class="ui-icon"><svg class="ic"><use href="#i-paperclip"/></svg></span><span class="ui-name"></span><span class="ui-size"></span><button class="icon-btn danger" title="移除"><svg class="ic"><use href="#i-x"/></svg></button>';
+        item.querySelector('.ui-name').textContent = f.name;
+        item.querySelector('.ui-size').textContent = size;
+        item.querySelector('.icon-btn').addEventListener('click', function () { item.remove(); });
+        list.appendChild(item);
+      });
+    }
+    drop.addEventListener('click', function () { input.click(); });
+    input.addEventListener('change', function () { addFiles(input.files); input.value = ''; });
+    ['dragover', 'dragenter'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('dragover'); });
+    });
+    drop.addEventListener('drop', function (e) { addFiles(e.dataTransfer.files); });
+  });
+
+  /* 多选标签输入 */
+  document.querySelectorAll('[data-tag-input]').forEach(function (ti) {
+    var box = ti.querySelector('.tag-input-box');
+    var field = ti.querySelector('.tag-input-field');
+    function addTag(text) {
+      text = text.trim(); if (!text) return;
+      var t = document.createElement('span');
+      t.className = 'tag tag-accent';
+      t.innerHTML = text + ' <svg class="ic"><use href="#i-x"/></svg>';
+      t.querySelector('.ic').addEventListener('click', function () { t.remove(); });
+      box.insertBefore(t, field);
+    }
+    field.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); addTag(field.value); field.value = ''; }
+      if (e.key === 'Backspace' && !field.value) {
+        var tags = box.querySelectorAll('.tag');
+        if (tags.length) tags[tags.length - 1].remove();
+      }
+    });
+    box.addEventListener('click', function (e) { if (e.target === box || e.target === field) field.focus(); });
+  });
+
+  /* 多选下拉 */
+  document.querySelectorAll('[data-multiselect]').forEach(function (ms) {
+    var trigger = ms.querySelector('.ms-trigger');
+    var input = ms.querySelector('.ms-input');
+    var options = ms.querySelectorAll('.ms-option');
+    function addChip(text) {
+      var t = document.createElement('span');
+      t.className = 'tag tag-accent';
+      t.innerHTML = text + ' <svg class="ic"><use href="#i-x"/></svg>';
+      t.querySelector('.ic').addEventListener('click', function () { t.remove(); });
+      trigger.insertBefore(t, input);
+    }
+    function open() { ms.classList.add('open'); }
+    function close() { ms.classList.remove('open'); }
+    trigger.addEventListener('click', function (e) { e.stopPropagation(); ms.classList.contains('open') ? close() : open(); });
+    options.forEach(function (opt) {
+      opt.addEventListener('click', function (e) {
+        e.stopPropagation();
+        opt.classList.toggle('checked');
+        if (opt.classList.contains('checked')) addChip(opt.getAttribute('data-value'));
+        else {
+          var chips = trigger.querySelectorAll('.tag');
+          chips.forEach(function (t) { if (t.textContent.indexOf(opt.getAttribute('data-value')) === 0) t.remove(); });
+        }
+      });
+    });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && input.value.trim()) { addChip(input.value.trim()); input.value = ''; }
+    });
+    document.addEventListener('click', function (e) { if (!ms.contains(e.target)) close(); });
+  });
+
+  /* 数字输入 */
+  document.querySelectorAll('[data-number]').forEach(function (ni) {
+    var field = ni.querySelector('.ni-field');
+    var min = parseFloat(field.min || -Infinity), max = parseFloat(field.max || Infinity);
+    ni.querySelectorAll('.ni-btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var v = parseFloat(field.value || 0) + parseFloat(b.getAttribute('data-step'));
+        if (v < min) v = min; if (v > max) v = max;
+        field.value = v;
+      });
+    });
+  });
+
+  /* 搜索框清除 */
+  document.querySelectorAll('[data-search]').forEach(function (sw) {
+    var input = sw.querySelector('input');
+    var clear = sw.querySelector('.input-clear');
+    input.addEventListener('input', function () { clear.classList.toggle('show', !!input.value); });
+    clear.addEventListener('click', function () { input.value = ''; clear.classList.remove('show'); input.focus(); });
+  });
+
+  /* 右键菜单 */
+  var ctxMenu = document.getElementById('ctx-menu');
+  document.querySelectorAll('[data-ctx]').forEach(function (area) {
+    area.addEventListener('contextmenu', function (e) {
+      e.preventDefault();
+      ctxMenu.style.left = e.clientX + 'px';
+      ctxMenu.style.top = e.clientY + 'px';
+      ctxMenu.classList.add('show');
+    });
+  });
+  document.addEventListener('click', function () { ctxMenu.classList.remove('show'); });
+  ctxMenu.querySelectorAll('.ctx-item').forEach(function (item) {
+    item.addEventListener('click', function () { ctxMenu.classList.remove('show'); });
+  });
+
+  /* 抽屉 */
+  var drawer = document.getElementById('drawer');
+  var drawerOverlay = document.getElementById('drawer-overlay');
+  document.getElementById('btn-drawer').addEventListener('click', function () { drawer.classList.add('open'); drawerOverlay.classList.add('show'); });
+  function closeDrawer() { drawer.classList.remove('open'); drawerOverlay.classList.remove('show'); }
+  document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+  drawerOverlay.addEventListener('click', closeDrawer);
+
 
 })();
 </script>
