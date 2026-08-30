@@ -34,7 +34,7 @@ body { font-family: var(--font); background: #eef0f4; color: var(--text-1); font
 
 /* 毛玻璃：伪元素模拟（filter 模糊背景副本，不依赖 backdrop-filter） */
 .topbar::before, .sidebar::before, .chat-header::before, .chat-input::before, .right-panel::before, .mobile-bottombar::before, .mobile-drawer::before {
-  content: ''; position: absolute; inset: -30px; background-image: var(--bg-image, var(--bg-image-default)); background-size: cover; background-position: center; filter: blur(20px) saturate(2); z-index: 0; pointer-events: none;
+  content: ''; position: absolute; inset: -30px; background-image: var(--bg-image, var(--bg-image-default)); background-size: cover; background-position: center; background-attachment: fixed; filter: blur(20px) saturate(2); z-index: 0; pointer-events: none;
 }
 .topbar > *, .sidebar > *, .chat-header > *, .chat-input > *, .right-panel > *, .mobile-bottombar > *, .mobile-drawer > * { position: relative; z-index: 1; }
 
