@@ -289,6 +289,22 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 .select-option.selected { background: var(--accent-soft); color: var(--accent); }
 .select-option .sel-check { margin-left: auto; color: var(--accent); font-size: 12px; display: none; }
 .select-option.selected .sel-check { display: flex; }
+/* 排序图标菜单 */
+.sort-menu { position: relative; flex-shrink: 0; }
+.sort-trigger { width: 26px; height: 26px; font-size: 13px; }
+.sort-pop {
+  position: absolute; top: calc(100% + 4px); right: 0;
+  min-width: 110px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  z-index: 60;
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+  transition: all 0.15s ease;
+}
+.sort-menu.open .sort-pop { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
 
 /* 弹窗 / Toast */
@@ -380,12 +396,9 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       </div>
       <div class="sidebar-tools">
         <input id="char-search" placeholder="搜索角色…">
-        <div class="select" data-select id="char-sort" style="width:70px;flex-shrink:0">
-          <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
-            <span class="sel-value">最近</span>
-            <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
-          </div>
-          <div class="select-menu" role="listbox">
+        <div class="sort-menu" data-sort-menu>
+          <button class="icon-btn sort-trigger" title="排序方式"><svg class="ic"><use href="#i-sliders"/></svg></button>
+          <div class="sort-pop" role="listbox">
             <div class="select-option selected" data-value="最近" role="option">最近<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
             <div class="select-option" data-value="A-Z" role="option">A-Z<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
             <div class="select-option" data-value="收藏" role="option">收藏<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
@@ -707,7 +720,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
   /* ============ 角色列表渲染 ============ */
   function renderChars() {
     var q = $('#char-search').value.trim().toLowerCase();
-    var sort = $('#char-sort .sel-value').textContent;
+    var sort = document.querySelector('.sort-pop .select-option.selected').getAttribute('data-value');
     var list = characters.filter(function (c) { return !q || c.name.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q); });
     if (sort === 'A-Z') list.sort(function (a, b) { return a.name.localeCompare(b.name, 'zh'); });
     if (sort === '收藏') list.sort(function (a, b) { return (b.fav ? 1 : 0) - (a.fav ? 1 : 0); });
@@ -949,6 +962,12 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       close();
       if (sel.id === 'char-sort') renderChars();
     }
+    function selectSort(opt) {
+      document.querySelectorAll('.sort-pop .select-option').forEach(function (o) { o.classList.remove('selected'); });
+      opt.classList.add('selected');
+      document.querySelector('[data-sort-menu]').classList.remove('open');
+      renderChars();
+    }
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
       sel.classList.contains('open') ? close() : open();
@@ -965,6 +984,23 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     });
     document.addEventListener('click', function (e) { if (!sel.contains(e.target)) close(); });
   });
+
+  /* 排序图标菜单 */
+  var sortMenu = document.querySelector('[data-sort-menu]');
+  sortMenu.querySelector('.sort-trigger').addEventListener('click', function (e) {
+    e.stopPropagation();
+    sortMenu.classList.toggle('open');
+  });
+  sortMenu.querySelectorAll('.select-option').forEach(function (opt) {
+    opt.addEventListener('click', function (e) {
+      e.stopPropagation();
+      sortMenu.querySelectorAll('.select-option').forEach(function (o) { o.classList.remove('selected'); });
+      opt.classList.add('selected');
+      sortMenu.classList.remove('open');
+      renderChars();
+    });
+  });
+  document.addEventListener('click', function (e) { if (!sortMenu.contains(e.target)) sortMenu.classList.remove('open'); });
 
   /* ============ 初始化 ============ */
   renderChars();
