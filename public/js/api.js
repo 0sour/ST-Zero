@@ -5,17 +5,17 @@ const API_BASE = '/api';
 
 let token: string | null = localStorage.getItem('stzero_token');
 
-export function getToken(): string | null {
+function getToken(): string | null {
   return token;
 }
 
-export function setToken(t: string | null) {
+function setToken(t: string | null) {
   token = t;
   if (t) localStorage.setItem('stzero_token', t);
   else localStorage.removeItem('stzero_token');
 }
 
-export function isLoggedIn(): boolean {
+function isLoggedIn(): boolean {
   return !!token;
 }
 
@@ -40,7 +40,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return res.json() as Promise<T>;
 }
 
-export const api = {
+const api = {
   // 认证
   login: (username: string, password: string) =>
     request<{ token: string; user: unknown }>('POST', '/auth/login', { username, password }),
@@ -99,6 +99,13 @@ export const api = {
 };
 
 /** 角色卡图片 URL */
-export function avatarUrl(path: string): string {
+function avatarUrl(path: string): string {
   return `/files/${path}`;
 }
+
+// 挂载到全局（普通 script 加载，非 ES module）
+window.api = api;
+window.getToken = getToken;
+window.setToken = setToken;
+window.isLoggedIn = isLoggedIn;
+window.avatarUrl = avatarUrl;
