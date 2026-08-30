@@ -634,7 +634,19 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     <div class="modal-body">
 
           <div class="section-title">后端连接</div>
-
+          <div class="field">
+            <label class="field-label">后端类型</label>
+            <div class="select" data-select id="backend-type">
+              <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
+                <span class="sel-value">openai</span>
+                <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+              </div>
+              <div class="select-menu" role="listbox">
+                <div class="select-option selected" data-value="openai" role="option">OpenAI 兼容<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="kobold" role="option">KoboldAI<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              </div>
+            </div>
+          </div>
           <div class="field">
             <label class="field-label">API 地址</label>
             <input id="backend-url" placeholder="http://localhost:11434/v1">
@@ -662,6 +674,18 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             <button class="btn" id="bg-upload">上传背景图</button>
             <button class="btn" id="bg-clear">清除</button>
             <input type="file" id="bg-file" accept="image/*" hidden>
+          </div>
+          <div class="section-title">Persona</div>
+          <div class="field">
+            <label class="field-label">角色名</label>
+            <input id="persona-name" placeholder="你的角色名">
+          </div>
+          <div class="field">
+            <label class="field-label">角色描述</label>
+            <textarea id="persona-desc" placeholder="描述你的角色设定…"></textarea>
+          </div>
+          <div class="btn-row">
+            <button class="btn primary" id="btn-save-persona">保存 Persona</button>
           </div>
           <div class="section-title">主题色</div>
           <div class="theme-swatches">
@@ -815,12 +839,30 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       return '<div class="char-item' + (state.currentChar && c.id === state.currentChar.id ? ' active' : '') + '" data-id="' + c.id + '">' +
         '<div class="char-avatar">' + avatarImg(c.avatar_path, c.name[0]) + '</div>' +
         '<div class="char-info">' +
-          '<div class="char-name">' + esc(c.name) + (c.fav ? ' <span class="fav"><svg class="ic ic-fill"><use href="#i-star"/></svg></span>' : '') + '</div>' +
+          '<div class="char-name">' + esc(c.name) + '</div>' +
           '<div class="char-desc">' + esc(c.name) + '</div>' +
-        '</div></div>';
+        '</div>' +
+        '<button class="icon-btn fav-btn" data-fav="' + c.id + '" title="' + (c.fav ? '取消收藏' : '收藏') + '" style="color:' + (c.fav ? 'var(--accent)' : 'var(--text-3)') + '"><svg class="ic' + (c.fav ? ' ic-fill' : '') + '"><use href="#i-star"/></svg></button>' +
+      '</div>';
     }).join('');
     $$('#char-list .char-item').forEach(function (el) {
-      el.addEventListener('click', function () { selectChar(el.getAttribute('data-id')); });
+      el.addEventListener('click', function (e) {
+        if (e.target.closest('.fav-btn')) return;
+        selectChar(el.getAttribute('data-id'));
+      });
+    });
+    $$('#char-list .fav-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var id = btn.getAttribute('data-fav');
+        var c = state.characters.find(function (x) { return x.id === id; });
+        if (!c) return;
+        api.toggleFav(id, !c.fav).then(function (d) {
+          c.fav = d.fav;
+          renderChars();
+          toast('success', 'i-check', d.fav ? '已收藏' : '已取消收藏');
+        }).catch(function (err) { toast('danger', 'i-alert', err.message); });
+      });
     });
   }
   function selectChar(id) {
@@ -899,12 +941,60 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         '</div>';
       }
       html += '<div class="msg-actions">' +
+        '<button class="msg-act" data-act="edit" title="编辑"><svg class="ic"><use href="#i-pencil"/></svg></button>' +
         '<button class="msg-act" data-act="copy" title="复制"><svg class="ic"><use href="#i-copy"/></svg></button>' +
         '<button class="msg-act" data-act="del" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>' +
+        (i === state.messages.length - 1 && !isUser ? '<button class="msg-act" data-act="regen" title="重新生成"><svg class="ic"><use href="#i-refresh"/></svg></button>' : '') +
       '</div></div></div>';
       return html;
     }).join('');
     box.scrollTop = box.scrollHeight;
+    bindMsgActions();
+  }
+  function bindMsgActions() {
+    $$('#chat-messages .msg-act').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var idx = parseInt(b.closest('.msg').getAttribute('data-idx'));
+        var act = b.getAttribute('data-act');
+        var m = state.messages[idx];
+        if (act === 'copy') {
+          navigator.clipboard && navigator.clipboard.writeText(m.mes || '');
+          toast('success', 'i-check', '已复制');
+        }
+        if (act === 'del') {
+          api.deleteMessage(state.currentChat.id, idx).then(function () {
+            state.messages.splice(idx, 1);
+            renderMessages();
+          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+        }
+        if (act === 'edit') {
+          var newText = prompt('编辑消息：', m.mes || '');
+          if (newText !== null) {
+            api.editMessage(state.currentChat.id, idx, newText).then(function () {
+              m.mes = newText;
+              renderMessages();
+              toast('success', 'i-check', '消息已更新');
+            }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+          }
+        }
+        if (act === 'regen') {
+          // 删除最后一条 AI 消息并重新生成
+          api.deleteMessage(state.currentChat.id, idx).then(function () {
+            state.messages.splice(idx, 1);
+            renderMessages();
+            // 用上一条用户消息重新生成
+            var lastUser = null;
+            for (var i = state.messages.length - 1; i >= 0; i--) {
+              if (state.messages[i].is_user) { lastUser = state.messages[i]; break; }
+            }
+            if (lastUser) {
+              $('#chat-input').value = lastUser.mes || '';
+              send();
+            }
+          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+        }
+      });
+    });
   }
 
   /* ============ 发送（SSE 流式） ============ */
@@ -1062,6 +1152,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     api.getSettings().then(function (data) {
       var s = data.settings;
       if (s.backend) {
+        document.querySelector('#backend-type .sel-value').textContent = s.backend.type || 'openai';
         $('#backend-url').value = s.backend.baseUrl || '';
         $('#backend-model').value = s.backend.model || '';
         $('#backend-key').value = s.backend.apiKey || '';
@@ -1072,12 +1163,25 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         $('#top-p').value = s.sampling.topP ?? 0.95;
         $('#top-p-num').value = s.sampling.topP ?? 0.95;
       }
+      if (s.persona) {
+        $('#persona-name').value = s.persona.name || '';
+        $('#persona-desc').value = s.persona.description || '';
+      }
     }).catch(function () {});
   }
+  $('#btn-save-persona').addEventListener('click', function () {
+    api.updateSettings({
+      persona: {
+        name: $('#persona-name').value.trim(),
+        description: $('#persona-desc').value.trim(),
+      },
+    }).then(function () { toast('success', 'i-check', 'Persona 已保存'); })
+      .catch(function (e) { toast('danger', 'i-alert', e.message); });
+  });
   $('#btn-save-settings').addEventListener('click', function () {
     api.updateSettings({
       backend: {
-        type: 'openai',
+        type: document.querySelector('#backend-type .sel-value').textContent,
         baseUrl: $('#backend-url').value.trim() || 'http://localhost:11434/v1',
         model: $('#backend-model').value.trim() || 'qwen2.5',
         apiKey: $('#backend-key').value.trim(),
@@ -1154,7 +1258,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         return '<div class="wi-item" data-id="' + c.id + '"><div class="wi-k">' + esc(c.title || '未命名') + '</div><div class="wi-c">' + new Date(c.updated_at).toLocaleString('zh-CN') + '</div></div>';
       }).join('') || '<div class="empty"><div class="empty-title">暂无聊天</div></div>';
       openModal('聊天管理 · ' + esc(state.currentChar.name), listHtml,
-        '<button class="btn" id="btn-export-chat"><svg class="ic"><use href="#i-download"/></svg> 导出</button><button class="btn" onclick="closeModal()">关闭</button><button class="btn primary" id="modal-new-chat">新建聊天</button>');
+        '<button class="btn" id="btn-import-chat"><svg class="ic"><use href="#i-upload"/></svg> 导入</button><button class="btn" id="btn-export-chat"><svg class="ic"><use href="#i-download"/></svg> 导出</button><button class="btn" onclick="closeModal()">关闭</button><button class="btn primary" id="modal-new-chat">新建聊天</button>');
       $$('#modal-body .wi-item').forEach(function (el) {
         el.addEventListener('click', function () {
           loadChat(el.getAttribute('data-id'));
@@ -1180,6 +1284,17 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
           a.click();
           toast('success', 'i-check', '聊天已导出');
         }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+      });
+      $('#btn-import-chat').addEventListener('click', function () {
+        openModal('导入聊天', '<div class="field"><label class="field-label">粘贴聊天 JSONL</label><textarea id="import-chat-jsonl" style="min-height:150px" placeholder="{...}\n{...}"></textarea></div>',
+          '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-import-chat">导入</button>');
+        $('#modal-import-chat').addEventListener('click', function () {
+          api.importChat(state.currentChar.id, $('#import-chat-jsonl').value).then(function () {
+            closeModal();
+            loadChats(state.currentChar.id);
+            toast('success', 'i-check', '聊天已导入');
+          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+        });
       });
     }).catch(function (e) { toast('danger', 'i-alert', e.message); });
   });

@@ -199,3 +199,14 @@ function createPlaceholderPng(card: CharacterCardV2): Buffer {
   );
   return writeCharacterCardJson(base, card);
 }
+
+/** 切换收藏 */
+charactersRouter.post('/:id/fav', (req, res) => {
+  const row = getDb()
+    .prepare('SELECT * FROM characters WHERE id = ? AND user_id = ?')
+    .get(req.params.id, req.user!.id) as Record<string, unknown> | undefined;
+  if (!row) return res.status(404).json({ error: 'Character not found' });
+  const fav = req.body.fav === undefined ? !row.fav : !!req.body.fav;
+  getDb().prepare('UPDATE characters SET fav = ?, updated_at = ? WHERE id = ?').run(fav ? 1 : 0, Date.now(), req.params.id);
+  return res.json({ ok: true, fav });
+});

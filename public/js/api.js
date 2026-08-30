@@ -70,6 +70,9 @@ var api = {
   deleteCharacter: function (id, deleteChats) {
     return request('DELETE', '/characters/' + id + '?delete_chats=' + (deleteChats ? 'true' : 'false'));
   },
+  toggleFav: function (id, fav) {
+    return request('POST', '/characters/' + id + '/fav', { fav: fav });
+  },
   importCharacter: function (file, fileType) {
     var fd = new FormData();
     fd.append('file', file);
@@ -100,6 +103,12 @@ var api = {
   },
   deleteChat: function (id) {
     return request('DELETE', '/chats/' + id);
+  },
+  editMessage: function (chatId, idx, mes) {
+    return request('PATCH', '/chats/' + chatId + '/messages/' + idx, { mes: mes });
+  },
+  deleteMessage: function (chatId, idx) {
+    return request('DELETE', '/chats/' + chatId + '/messages/' + idx);
   },
 
   // 世界书
@@ -170,6 +179,17 @@ var api = {
   },
   deletePreset: function (name) {
     return request('DELETE', '/presets/' + encodeURIComponent(name));
+  },
+
+  // 快捷回复
+  listQuickReplies: function () {
+    return request('GET', '/quick-replies');
+  },
+  createQuickReply: function (label, message) {
+    return request('POST', '/quick-replies', { label: label, message: message });
+  },
+  deleteQuickReply: function (id) {
+    return request('DELETE', '/quick-replies/' + id);
   },
 
   // 聊天导入导出

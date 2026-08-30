@@ -8,7 +8,8 @@ import { requireAuth } from '../auth/middleware.js';
 import { createHeader, parseChatJsonl, serializeChatJsonl, ChatMessage } from '../format/chat.js';
 import { readCharacterCardJson } from '../format/png.js';
 import { normalizeToV2, CharacterCardV2 } from '../format/character-card.js';
-import { scanWorldInfo, DEFAULT_WI_SETTINGS, WorldInfoEntry } from '../engine/lorebook.js';
+import { scanWorldInfo, DEFAULT_WI_SETTINGS } from '../engine/lorebook.js';
+import { WorldInfoEntry } from '../format/world-info.js';
 import { parseWorldInfo, extractCharacterBook } from '../format/world-info.js';
 import { RegexScript } from '../engine/regex.js';
 import { buildPrompt, CharacterPromptData } from '../engine/prompt.js';
@@ -259,4 +260,32 @@ chatsRouter.post('/import', (req, res) => {
   } catch (e) {
     return res.status(400).json({ error: 'Import failed: ' + (e as Error).message });
   }
+});
+
+/** 编辑消息 */
+chatsRouter.patch('/:id/messages/:idx', (req, res) => {
+  const row = getDb().prepare('SELECT * FROM chats WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id);
+  if (!row) return res.status(404).json({ error: 'Chat not found' });
+  const absPath = path.join(config.dataDir, row.file_path as string);
+  const { header, messages } = parseChatJsonl(fs.readFileSync(absPath, 'utf-8'));
+  const idx = parseInt(req.params.idx, 10);
+  if (idx < 0 || idx >= messages.length) return res.status(400).json({ error: 'Message index out of range' });
+  const { mes } = req.body as { mes?: string };
+  if (mes === undefined) return res.status(400).json({ error: 'mes is required' });
+  messages[idx].mes = mes;
+  fs.writeFileSync(absPath, serializeChatJsonl(header, messages));
+  return res.json({ ok: true, message: messages[idx] });
+});
+
+/** 删除消息（从 idx 起删除） */
+chatsRouter.delete('/:id/messages/:idx', (req, res) => {
+  const row = getDb().prepare('SELECT * FROM chats WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id);
+  if (!row) return res.status(404).json({ error: 'Chat not found' });
+  const absPath = path.join(config.dataDir, row.file_path as string);
+  const { header, messages } = parseChatJsonl(fs.readFileSync(absPath, 'utf-8'));
+  const idx = parseInt(req.params.idx, 10);
+  if (idx < 0 || idx >= messages.length) return res.status(400).json({ error: 'Message index out of range' });
+  messages.splice(idx, 1);
+  fs.writeFileSync(absPath, serializeChatJsonl(header, messages));
+  return res.json({ ok: true });
 });
