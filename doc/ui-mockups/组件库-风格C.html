@@ -721,6 +721,102 @@ body {
 .login-sub { text-align: center; font-size: 12px; color: var(--text-3); margin-bottom: 24px; }
 
 /* ============================================================
+   20. 动画 Animations（全部自研）
+   ============================================================ */
+/* --- 过渡动画（Hover） --- */
+.anim-hover-lift { transition: transform .2s ease, box-shadow .2s ease; }
+.anim-hover-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.anim-hover-grow { transition: transform .2s ease; }
+.anim-hover-grow:hover { transform: scale(1.06); }
+.anim-hover-glow { transition: box-shadow .2s ease, border-color .2s ease; }
+.anim-hover-glow:hover { box-shadow: 0 0 14px var(--accent-strong); border-color: var(--accent); }
+.anim-card {
+  width: 96px; height: 64px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px; color: var(--text-2);
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.anim-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-lg); border-color: var(--accent); color: var(--accent); }
+
+/* --- 关键帧动画（点击触发） --- */
+.anim-target {
+  width: 120px; height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px; color: var(--text-2);
+}
+.anim-fade { animation: fade-in .4s ease; }
+.anim-slide { animation: slide-in-left .4s ease; }
+.anim-scale { animation: scale-in .3s ease; }
+.anim-rotate { animation: rotate-in .45s ease; }
+.anim-shake { animation: shake .5s ease; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-in-left { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes scale-in { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes rotate-in { from { transform: rotate(-180deg) scale(.6); opacity: 0; } to { transform: rotate(0) scale(1); opacity: 1; } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
+
+/* --- 持续动画 --- */
+.anim-bounce { animation: bounce 1.5s ease infinite; }
+.anim-pulse { animation: pulse 1.5s ease infinite; }
+.anim-breathe { animation: breathe 2.5s ease infinite; }
+.anim-spin { animation: spin 1s linear infinite; }
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- 加载动画 --- */
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--bg-3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+.spinner-sm { width: 16px; height: 16px; border-width: 2px; }
+.spinner-lg { width: 36px; height: 36px; border-width: 3px; }
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 50%, var(--bg-2) 75%);
+  background-size: 800px 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.2s infinite linear;
+}
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.progress {
+  width: 200px; height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  border-radius: 3px;
+  animation: progress 2s ease infinite;
+}
+@keyframes progress { 0% { width: 0%; } 60% { width: 100%; } 100% { width: 100%; opacity: .6; } }
+
+/* --- 波纹反馈 --- */
+.ripple-btn { position: relative; overflow: hidden; }
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(214, 178, 128, 0.35);
+  transform: scale(0);
+  animation: ripple .6s ease-out;
+  pointer-events: none;
+}
+@keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+
+/* ============================================================
    19. 页面布局（组件库展示用）
    ============================================================ */
 .demo-page { display: flex; min-height: 100vh; }
@@ -1235,6 +1331,64 @@ body {
       </div>
     </div>
 
+
+    <!-- ============ 14. 动画 ============ -->
+    <div class="demo-section" id="animations">
+      <div class="section-title">动画 Animations</div>
+
+      <div class="demo-block">
+        <div class="demo-block-title">过渡动画（Hover 触发）</div>
+        <div class="demo-grid">
+          <button class="btn anim-hover-lift">悬停上浮</button>
+          <button class="btn anim-hover-grow">悬停放大</button>
+          <button class="btn anim-hover-glow">悬停发光</button>
+          <div class="anim-card">悬停卡片</div>
+        </div>
+      </div>
+
+      <div class="demo-block">
+        <div class="demo-block-title">关键帧动画（点击触发）</div>
+        <div class="demo-grid">
+          <button class="btn" data-anim="fade">淡入</button>
+          <button class="btn" data-anim="slide">滑入</button>
+          <button class="btn" data-anim="scale">缩放</button>
+          <button class="btn" data-anim="rotate">旋转</button>
+          <button class="btn" data-anim="shake">抖动</button>
+          <div class="anim-target" id="anim-target">动画目标</div>
+        </div>
+      </div>
+
+      <div class="demo-block">
+        <div class="demo-block-title">持续动画（自动循环）</div>
+        <div class="demo-grid">
+          <div class="anim-bounce" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:var(--bg-1);border:1px solid var(--border);border-radius:50%;font-size:12px;color:var(--text-2)">弹跳</div>
+          <div class="anim-pulse" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);border:1px solid var(--border);border-radius:50%;font-size:12px;color:var(--accent)">脉冲</div>
+          <div class="anim-breathe" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:var(--bg-1);border:1px solid var(--accent);border-radius:50%;font-size:12px;color:var(--accent)">呼吸</div>
+          <div class="anim-spin" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:var(--bg-1);border:1px solid var(--border);border-radius:50%;font-size:12px;color:var(--text-2)">旋转</div>
+        </div>
+      </div>
+
+      <div class="demo-block">
+        <div class="demo-block-title">加载动画</div>
+        <div class="demo-grid">
+          <div class="spinner"></div>
+          <div class="spinner spinner-sm"></div>
+          <div class="spinner spinner-lg"></div>
+          <div class="skeleton" style="width:200px;height:14px"></div>
+          <div class="skeleton" style="width:140px;height:14px"></div>
+          <div class="progress"><div class="progress-bar"></div></div>
+        </div>
+      </div>
+
+      <div class="demo-block">
+        <div class="demo-block-title">波纹反馈（点击）</div>
+        <div class="demo-grid">
+          <button class="btn btn-primary ripple-btn">点击产生波纹</button>
+          <button class="btn ripple-btn">波纹按钮</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -1374,6 +1528,33 @@ body {
   }
   document.getElementById('btn-toast-s').addEventListener('click', function () { toast('success', 'i-check', '保存成功'); });
   document.getElementById('btn-toast-d').addEventListener('click', function () { toast('danger', 'i-alert', '连接失败，请检查 API 配置'); });
+
+  /* 动画演示：点击触发关键帧 */
+  var animTarget = document.getElementById('anim-target');
+  document.querySelectorAll('[data-anim]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var type = btn.getAttribute('data-anim');
+      animTarget.className = 'anim-target';
+      void animTarget.offsetWidth; /* 重启动画 */
+      animTarget.classList.add('anim-' + type);
+    });
+  });
+
+  /* 波纹反馈 */
+  document.querySelectorAll('.ripple-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      var rect = btn.getBoundingClientRect();
+      var size = Math.max(rect.width, rect.height);
+      var ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      btn.appendChild(ripple);
+      setTimeout(function () { ripple.remove(); }, 600);
+    });
+  });
+
 })();
 </script>
 </body>
