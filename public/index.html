@@ -318,8 +318,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 .toast-danger { border-left-color: var(--danger); }
 .toast-danger .ic { color: var(--danger); }
 @keyframes toast-in { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-.theme-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 500; display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-1); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-lg); font-size: 12px; cursor: pointer; color: var(--text-2); transition: all var(--transition); appearance: none; -webkit-appearance: none; line-height: 20px; }
-.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
 /* 用户菜单 */
 .user-menu { position: fixed; top: 50px; right: 12px; z-index: 150; min-width: 180px; background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 4px; display: none; }
@@ -420,6 +418,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
       <input id="global-search" placeholder="搜索角色、世界书、正则…">
     </div>
     <div class="topbar-actions">
+      <div class="tb-btn" title="切换亮暗主题" id="theme-toggle"><svg class="ic"><use href="#i-settings"/></svg></div>
       <div class="tb-btn" title="设置" data-tab-btn="settings"><svg class="ic"><use href="#i-settings"/></svg></div>
       <div class="avatar" id="user-avatar" title="用户菜单">S</div>
     </div>
@@ -748,10 +747,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <!-- 主题切换 -->
-<button class="theme-toggle" id="theme-toggle">
-  <svg class="ic"><use href="#i-settings"/></svg>
-  <span id="theme-label">暗色主题</span>
-</button>
+
 
 <script src="/js/api.js"></script>
 <script>
@@ -1495,8 +1491,8 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
   /* ============ 主题切换 ============ */
   $('#theme-toggle').addEventListener('click', function () {
     var isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    if (isLight) { document.documentElement.removeAttribute('data-theme'); $('#theme-label').textContent = '暗色主题'; }
-    else { document.documentElement.setAttribute('data-theme', 'light'); $('#theme-label').textContent = '亮色主题'; }
+    if (isLight) { document.documentElement.removeAttribute('data-theme'); $('#theme-toggle').setAttribute('title', '切换亮暗主题'); }
+    else { document.documentElement.setAttribute('data-theme', 'light'); $('#theme-toggle').setAttribute('title', '切换亮暗主题'); }
   });
 
   /* ============ 弹窗 ============ */
