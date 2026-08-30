@@ -210,27 +210,56 @@ body {
 /* ============================================================
    3. 下拉选择（自研：隐藏原生 select 外观）
    ============================================================ */
-.select {
-  width: 100%;
-  height: 34px;
-  padding: 0 32px 0 12px;
+/* 自研下拉选择（完全自绘，不使用原生 select） */
+.select { position: relative; width: 100%; }
+.select-trigger {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; height: 34px;
+  padding: 0 12px;
   font-family: var(--font-ui); font-size: 13px;
   color: var(--text-1);
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  outline: none;
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition);
+}
+.select-trigger:hover { border-color: var(--border-strong); }
+.select.open .select-trigger { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.select-trigger .sel-value { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.select-trigger .sel-arrow { color: var(--text-3); font-size: 12px; transition: transform var(--transition); flex-shrink: 0; display: flex; }
+.select.open .sel-arrow { transform: rotate(180deg); color: var(--accent); }
+.select-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  z-index: 60;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  opacity: 0; transform: translateY(-4px); pointer-events: none;
+  transition: all 0.15s ease;
+}
+.select.open .select-menu { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.select-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-2);
   cursor: pointer;
   transition: all var(--transition);
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23b3a896' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
+  user-select: none;
 }
-.select:hover { border-color: var(--border-strong); }
-.select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.select option { background: var(--bg-1); color: var(--text-1); }
+.select-option:hover { background: var(--bg-2); color: var(--text-1); }
+.select-option.selected { background: var(--accent-soft); color: var(--accent); }
+.select-option .sel-check { margin-left: auto; color: var(--accent); font-size: 13px; display: none; }
+.select-option.selected .sel-check { display: flex; }
+.select-option.disabled { opacity: 0.4; cursor: not-allowed; }
+.select-option.disabled:hover { background: transparent; color: var(--text-2); }
 
 /* ============================================================
    4. 复选框 / 单选（自研：隐藏原生，绘制自定义）
@@ -896,20 +925,32 @@ body {
         <div class="demo-grid" style="align-items:flex-start">
           <div style="width:220px">
             <label class="field-label">模型选择</label>
-            <select class="select">
-              <option>ChatML · 默认</option>
-              <option>Llama3</option>
-              <option>Mistral</option>
-              <option>Qwen2</option>
-            </select>
+            <div class="select" data-select>
+              <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
+                <span class="sel-value">ChatML · 默认</span>
+                <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+              </div>
+              <div class="select-menu" role="listbox">
+                <div class="select-option selected" data-value="ChatML · 默认" role="option">ChatML · 默认<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="Llama3" role="option">Llama3<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="Mistral" role="option">Mistral<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="Qwen2" role="option">Qwen2<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              </div>
+            </div>
           </div>
           <div style="width:220px">
             <label class="field-label">排序方式</label>
-            <select class="select">
-              <option>最近使用</option>
-              <option>A-Z</option>
-              <option>收藏优先</option>
-            </select>
+            <div class="select" data-select>
+              <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
+                <span class="sel-value">最近使用</span>
+                <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+              </div>
+              <div class="select-menu" role="listbox">
+                <div class="select-option selected" data-value="最近使用" role="option">最近使用<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="A-Z" role="option">A-Z<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+                <div class="select-option" data-value="收藏优先" role="option">收藏优先<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1255,6 +1296,51 @@ body {
       });
     }
     sync();
+  });
+
+  /* 自研下拉选择 */
+  document.querySelectorAll('[data-select]').forEach(function (sel) {
+    var trigger = sel.querySelector('.select-trigger');
+    var options = sel.querySelectorAll('.select-option');
+    var value = sel.querySelector('.sel-value');
+    function open() {
+      sel.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+    }
+    function close() {
+      sel.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+    function select(opt) {
+      options.forEach(function (o) { o.classList.remove('selected'); });
+      opt.classList.add('selected');
+      value.textContent = opt.getAttribute('data-value');
+      close();
+    }
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      sel.classList.contains('open') ? close() : open();
+    });
+    options.forEach(function (opt) {
+      opt.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (opt.classList.contains('disabled')) return;
+        select(opt);
+      });
+    });
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel.classList.contains('open') ? close() : open(); }
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        var idx = Array.prototype.indexOf.call(options, sel.querySelector('.select-option.selected'));
+        var next = e.key === 'ArrowDown' ? Math.min(idx + 1, options.length - 1) : Math.max(idx - 1, 0);
+        select(options[next]);
+      }
+    });
+    document.addEventListener('click', function (e) {
+      if (!sel.contains(e.target)) close();
+    });
   });
 
   /* 折叠面板 */
