@@ -8,7 +8,9 @@ import { requireAuth } from '../auth/middleware.js';
 import { createHeader, parseChatJsonl, serializeChatJsonl, ChatMessage } from '../format/chat.js';
 import { readCharacterCardJson } from '../format/png.js';
 import { normalizeToV2, CharacterCardV2 } from '../format/character-card.js';
-import { scanWorldInfo, DEFAULT_WI_SETTINGS } from '../engine/lorebook.js';
+import { scanWorldInfo, DEFAULT_WI_SETTINGS, WorldInfoEntry } from '../engine/lorebook.js';
+import { parseWorldInfo, extractCharacterBook } from '../format/world-info.js';
+import { RegexScript } from '../engine/regex.js';
 import { buildPrompt, CharacterPromptData } from '../engine/prompt.js';
 import { generateChatCompletion, generateTextCompletion, BackendConfig } from '../backends/index.js';
 
@@ -86,9 +88,38 @@ chatsRouter.post('/:id/messages', async (req, res) => {
   const card = normalizeToV2(parsed?.json ?? { spec: 'chara_card_v2', spec_version: '2.0', data: { name: 'Unknown' } });
   const data = card.data;
 
-  // 世界书扫描（简化：无世界书时跳过）
+  // 加载用户设置（世界书/正则/预设/后端）
+  const settings = JSON.parse(
+    (getDb().prepare('SELECT data FROM settings WHERE user_id = ?').get(req.user!.id) as { data?: string } | undefined)?.data ?? '{}',
+  ) as {
+    backend?: BackendConfig;
+    regex?: RegexScript[];
+    presets?: Array<Record<string, unknown>>;
+    activePreset?: string | null;
+    selectedWorlds?: string[];
+  };
+
+  // 加载世界书（用户选中的 + 角色卡内嵌 character_book）
+  const wiEntries: WorldInfoEntry[] = [];
+  const selectedWorlds = settings.selectedWorlds ?? [];
+  for (const worldId of selectedWorlds) {
+    const wrow = getDb().prepare('SELECT * FROM worlds WHERE id = ? AND user_id = ?').get(worldId, req.user!.id) as Record<string, unknown> | undefined;
+    if (!wrow) continue;
+    try {
+      const wtext = fs.readFileSync(path.join(config.dataDir, wrow.file_path as string), 'utf-8');
+      const wi = parseWorldInfo(JSON.parse(wtext));
+      wiEntries.push(...Object.values(wi.entries));
+    } catch { /* 跳过损坏世界书 */ }
+  }
+  // 角色卡内嵌世界书（character_book）
+  if (data.character_book) {
+    const embedded = extractCharacterBook(data.character_book);
+    if (embedded) wiEntries.push(...Object.values(embedded.entries));
+  }
+
+  // 世界书扫描（真实条目）
   const worldInfo = scanWorldInfo({
-    entries: [],
+    entries: wiEntries,
     chatMessages: messages,
     settings: DEFAULT_WI_SETTINGS,
     maxContext: 4096,
@@ -106,13 +137,23 @@ chatsRouter.post('/:id/messages', async (req, res) => {
     alternate_greetings: data.alternate_greetings,
   };
 
-  // 后端配置（从用户设置读取，简化版）
-  const settings = JSON.parse(
-    (getDb().prepare('SELECT data FROM settings WHERE user_id = ?').get(req.user!.id) as { data?: string } | undefined)?.data ?? '{}',
-  ) as { backend?: BackendConfig };
+  // 后端配置
   const backend = settings.backend ?? { type: 'openai', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5', apiKey: '' };
 
-  // 构建 prompt
+  // 正则脚本（全局 + 角色卡 scoped）
+  const regexScripts: RegexScript[] = [...(settings.regex ?? [])];
+  const scopedRegex = (data.extensions?.regex_scripts as RegexScript[] | undefined) ?? [];
+  regexScripts.push(...scopedRegex);
+
+  // 预设（激活的预设提供采样参数与指令模板）
+  const activePreset = settings.presets?.find((p) => p.name === settings.activePreset) as
+    | { sampling?: Record<string, unknown>; instruct?: Record<string, unknown>; context?: Record<string, unknown> }
+    | undefined;
+  const sampling = activePreset?.sampling ?? {};
+  const instruct = activePreset?.instruct ?? {};
+  const context = activePreset?.context ?? {};
+
+  // 构建 prompt（真实世界书/正则/预设）
   const promptResult = buildPrompt({
     character: promptData,
     chat: messages,
@@ -120,18 +161,22 @@ chatsRouter.post('/:id/messages', async (req, res) => {
     persona: '',
     userName: req.user!.display_name || req.user!.username,
     instruct: {
-      input_sequence: '<|im_start|>user',
-      output_sequence: '<|im_start|>assistant',
-      system_sequence: '<|im_start|>system',
-      stop_sequence: '<|im_end|>',
-      wrap: true,
-      macro: true,
-      names_behavior: 'force',
+      input_sequence: (instruct.input_sequence as string) ?? '<|im_start|>user',
+      output_sequence: (instruct.output_sequence as string) ?? '<|im_start|>assistant',
+      system_sequence: (instruct.system_sequence as string) ?? '<|im_start|>system',
+      stop_sequence: (instruct.stop_sequence as string) ?? '<|im_end|>',
+      wrap: (instruct.wrap as boolean) ?? true,
+      macro: (instruct.macro as boolean) ?? true,
+      names_behavior: ((instruct.names_behavior as string) ?? 'force') as 'force' | 'auto' | 'none',
     },
-    context: { story_string: '{{system}}\n{{description}}\n{{chatHistory}}', example_separator: '***', chat_start: '***' },
+    context: {
+      story_string: (context.story_string as string) ?? '{{system}}\n{{description}}\n{{chatHistory}}',
+      example_separator: (context.example_separator as string) ?? '***',
+      chat_start: (context.chat_start as string) ?? '***',
+    },
     maxContext: 4096,
     maxTokens: 300,
-    regexScripts: [],
+    regexScripts,
     mode: 'chat',
   });
 
