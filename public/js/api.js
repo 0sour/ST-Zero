@@ -110,6 +110,12 @@ var api = {
   deleteMessage: function (chatId, idx) {
     return request('DELETE', '/chats/' + chatId + '/messages/' + idx);
   },
+  getChatSettings: function (chatId) {
+    return request('GET', '/chats/' + chatId + '/settings');
+  },
+  updateChatSettings: function (chatId, data) {
+    return request('PUT', '/chats/' + chatId + '/settings', data);
+  },
 
   // 世界书
   listWorlds: function () {

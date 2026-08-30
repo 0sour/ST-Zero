@@ -446,7 +446,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
         <div class="ch-sub" id="chat-title"></div>
         <div class="spacer"></div>
         <div class="tb-btn" title="聊天管理" id="btn-chat-manage"><svg class="ic"><use href="#i-folder"/></svg></div>
-        <div class="tb-btn" title="更多"><svg class="ic"><use href="#i-more"/></svg></div>
+        <div class="tb-btn" title="聊天设置" id="btn-chat-settings"><svg class="ic"><use href="#i-more"/></svg></div>
       </div>
       <div class="chat-messages" id="chat-messages">
         <div class="empty" id="chat-empty">
@@ -1293,6 +1293,37 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
             closeModal();
             loadChats(state.currentChar.id);
             toast('success', 'i-check', '聊天已导入');
+          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+        });
+      });
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  });
+
+  /* ============ 聊天设置 ============ */
+  $('#btn-chat-settings').addEventListener('click', function () {
+    if (!state.currentChat) { toast('danger', 'i-alert', '请先选择聊天'); return; }
+    api.getChatSettings(state.currentChat.id).then(function (data) {
+      var s = data.settings || {};
+      api.listWorlds().then(function (wd) {
+        var worldOptions = '<option value="">无</option>' + wd.worlds.map(function (w) {
+          return '<option value="' + w.id + '"' + (s.world_id === w.id ? ' selected' : '') + '>' + esc(w.name) + '</option>';
+        }).join('');
+        openModal('聊天设置',
+          '<div class="field"><label class="field-label">聊天标题</label><input id="cs-title" value="' + esc(data.title || '') + '"></div>' +
+          '<div class="field"><label class="field-label">场景覆盖</label><textarea id="cs-scenario" style="min-height:60px" placeholder="覆盖角色默认场景">' + esc(s.scenario_override || '') + '</textarea></div>' +
+          '<div class="field"><label class="field-label">作者注</label><textarea id="cs-author-note" style="min-height:60px" placeholder="注入到提示词的作者注">' + esc(s.author_note || '') + '</textarea></div>' +
+          '<div class="field"><label class="field-label">聊天级世界书</label><select id="cs-world">' + worldOptions + '</select></div>',
+          '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-save-cs">保存</button>');
+        $('#modal-save-cs').addEventListener('click', function () {
+          api.updateChatSettings(state.currentChat.id, {
+            title: $('#cs-title').value.trim(),
+            scenario_override: $('#cs-scenario').value,
+            author_note: $('#cs-author-note').value,
+            world_id: $('#cs-world').value || null,
+          }).then(function () {
+            closeModal();
+            $('#chat-title').textContent = '· ' + $('#cs-title').value.trim();
+            toast('success', 'i-check', '聊天设置已保存');
           }).catch(function (e) { toast('danger', 'i-alert', e.message); });
         });
       });

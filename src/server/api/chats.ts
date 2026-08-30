@@ -289,3 +289,37 @@ chatsRouter.delete('/:id/messages/:idx', (req, res) => {
   fs.writeFileSync(absPath, serializeChatJsonl(header, messages));
   return res.json({ ok: true });
 });
+
+/** 获取聊天设置（存 JSONL header 的 chat_metadata） */
+chatsRouter.get('/:id/settings', (req, res) => {
+  const row = getDb().prepare('SELECT * FROM chats WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id);
+  if (!row) return res.status(404).json({ error: 'Chat not found' });
+  const absPath = path.join(config.dataDir, row.file_path as string);
+  const { header } = parseChatJsonl(fs.readFileSync(absPath, 'utf-8'));
+  return res.json({ settings: header.chat_metadata ?? {}, title: row.title });
+});
+
+/** 更新聊天设置（合并到 chat_metadata） */
+chatsRouter.put('/:id/settings', (req, res) => {
+  const row = getDb().prepare('SELECT * FROM chats WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id);
+  if (!row) return res.status(404).json({ error: 'Chat not found' });
+  const absPath = path.join(config.dataDir, row.file_path as string);
+  const { header, messages } = parseChatJsonl(fs.readFileSync(absPath, 'utf-8'));
+  const { title, scenario_override, author_note, world_id } = req.body as {
+    title?: string;
+    scenario_override?: string;
+    author_note?: string;
+    world_id?: string | null;
+  };
+  header.chat_metadata = {
+    ...(header.chat_metadata ?? {}),
+    ...(scenario_override !== undefined ? { scenario_override } : {}),
+    ...(author_note !== undefined ? { author_note } : {}),
+    ...(world_id !== undefined ? { world_id } : {}),
+  };
+  fs.writeFileSync(absPath, serializeChatJsonl(header, messages));
+  if (title !== undefined) {
+    getDb().prepare('UPDATE chats SET title = ?, updated_at = ? WHERE id = ?').run(title, Date.now(), row.id);
+  }
+  return res.json({ ok: true, settings: header.chat_metadata });
+});
