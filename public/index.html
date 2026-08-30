@@ -1305,21 +1305,21 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     api.getChatSettings(state.currentChat.id).then(function (data) {
       var s = data.settings || {};
       api.listWorlds().then(function (wd) {
-        var worldOptions = '<option value="">无</option>' + wd.worlds.map(function (w) {
-          return '<option value="' + w.id + '"' + (s.world_id === w.id ? ' selected' : '') + '>' + esc(w.name) + '</option>';
+        var worldOptions = '<div class="select-option' + (!s.world_id ? ' selected' : '') + '" data-value="" role="option">无<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' + wd.worlds.map(function (w) {
+          return '<div class="select-option' + (s.world_id === w.id ? ' selected' : '') + '" data-value="' + w.id + '" role="option">' + esc(w.name) + '<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>';
         }).join('');
         openModal('聊天设置',
           '<div class="field"><label class="field-label">聊天标题</label><input id="cs-title" value="' + esc(data.title || '') + '"></div>' +
           '<div class="field"><label class="field-label">场景覆盖</label><textarea id="cs-scenario" style="min-height:60px" placeholder="覆盖角色默认场景">' + esc(s.scenario_override || '') + '</textarea></div>' +
           '<div class="field"><label class="field-label">作者注</label><textarea id="cs-author-note" style="min-height:60px" placeholder="注入到提示词的作者注">' + esc(s.author_note || '') + '</textarea></div>' +
-          '<div class="field"><label class="field-label">聊天级世界书</label><select id="cs-world">' + worldOptions + '</select></div>',
+          '<div class="field"><label class="field-label">聊天级世界书</label><div class="select" data-select id="cs-world"><div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false"><span class="sel-value">' + (s.world_id ? (wd.worlds.find(function(w){return w.id===s.world_id;}) ? wd.worlds.find(function(w){return w.id===s.world_id;}).name : '无') : '无') + '</span><span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span></div><div class="select-menu" role="listbox">' + worldOptions + '</div></div></div>',
           '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-save-cs">保存</button>');
         $('#modal-save-cs').addEventListener('click', function () {
           api.updateChatSettings(state.currentChat.id, {
             title: $('#cs-title').value.trim(),
             scenario_override: $('#cs-scenario').value,
             author_note: $('#cs-author-note').value,
-            world_id: $('#cs-world').value || null,
+            world_id: document.querySelector('#cs-world .select-option.selected').getAttribute('data-value') || null,
           }).then(function () {
             closeModal();
             $('#chat-title').textContent = '· ' + $('#cs-title').value.trim();
