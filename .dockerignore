@@ -1,0 +1,14 @@
+node_modules
+dist
+data
+参考
+doc
+tests
+scripts
+.git
+.gitignore
+*.log
+.env
+.env.local
+Dockerfile
+docker-compose.yml

@@ -1,0 +1,27 @@
+# ST-Zero docker-compose
+services:
+  st-zero:
+    build: .
+    container_name: st-zero
+    image: st-zero:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DATA_DIR=/app/data
+      - ENABLE_ACCOUNTS=false
+      - ALLOW_REGISTRATION=false
+      - DEFAULT_USER_ROLE=user
+      - JWT_SECRET=change-me-to-a-random-secret
+    volumes:
+      - st-zero-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8000/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  st-zero-data:
