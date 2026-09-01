@@ -164,10 +164,14 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 
 /* 右侧栏：竖排大写 tab */
 .right-panel { width: 300px; background: var(--bg-void); border-left: 1px solid #2a2a2a; display: flex; flex-direction: column; min-height: 0; }
+[data-theme="light"] .right-panel { background: #faf9f6; }
 .rp-tabs { display: flex; border-bottom: 1px solid var(--gold-line); }
 .rp-tab { flex: 1; height: 44px; border: none; background: transparent; color: var(--ink-2); font-size: 10px; font-weight: 600; letter-spacing: 0.2em; cursor: pointer; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; font-family: var(--font-mono); }
 .rp-tab:hover { color: var(--gold); }
-.rp-tab.active { color: var(--gold); background: transparent; font-weight: 700; box-shadow: inset 0 -2px 0 var(--gold); }
+.rp-tab { position: relative; }
+.rp-tab::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--gold); transform: scaleX(0); transition: transform 0.3s var(--ease-out); }
+.rp-tab.active::after { transform: scaleX(1); }
+.rp-tab.active { color: var(--gold); background: transparent; font-weight: 700; }
 .rp-body { flex: 1; overflow-y: auto; padding: 20px; }
 .rp-panel { display: none; }
 .rp-panel.active { display: block; animation: fade-in 0.4s var(--ease-out); }
@@ -193,6 +197,8 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .btn { height: 34px; padding: 0 18px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; letter-spacing: 0.1em; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
 .btn:hover { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 20px var(--gold-dim); }
 .btn.primary { background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold); font-weight: 600; }
+[data-theme="light"] .btn.primary { background: #a8824a; border-color: #a8824a; color: #fff; }
+[data-theme="light"] .btn.primary:hover { background: #c49a5e; }
 .btn.primary:hover { background: var(--gold-dim); }
 .btn-row { display: flex; gap: 8px; margin-top: 10px; }
 .icon-btn { width: 30px; height: 30px; border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
@@ -208,10 +214,16 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 [data-theme="light"] .slider-row input[type=range]::-webkit-slider-runnable-track { background: #d8d4cc; }
 [data-theme="light"] .slider-row input[type=range]::-moz-range-track { background: #d8d4cc; }
 .slider-row input[type=number] { width: 60px; background: transparent; border: 1px dashed var(--gold-line); padding: 4px 6px; color: var(--ink-1); font-size: 12px; font-family: var(--font-mono); }
-.wi-item { padding: 12px 14px; border-left: 2px solid transparent; cursor: pointer; transition: all 0.3s var(--ease-out); }
-.wi-item:hover { border-left-color: var(--gold); background: var(--gold-dim); }
-.wi-item .wi-k { font-family: var(--font-mono); font-size: 11px; color: var(--vermilion); }
-.wi-item .wi-c { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+.wi-item { padding: 14px 16px 14px 20px; border-left: 2px solid transparent; cursor: pointer; transition: all 0.3s var(--ease-out); }
+.wi-item:hover { border-left-color: var(--gold); }
+.wi-item .wi-k { font-family: var(--font-mono); font-size: 12px; color: #dddddd; }
+.wi-item { display: flex; gap: 10px; }
+.wi-icon { width: 16px; height: 16px; color: var(--gold); opacity: 0.6; flex-shrink: 0; margin-top: 2px; }
+.wi-body { flex: 1; min-width: 0; }
+.wi-item .wi-c { font-size: 12px; color: #888888; margin-top: 8px; line-height: 1.6; }
+[data-theme="light"] .wi-item .wi-k { color: #4a4a4a; }
+[data-theme="light"] .wi-item .wi-c { color: #888888; }
+[data-theme="light"] .wi-item:hover { background: rgba(0, 0, 0, 0.02); }
 .rx-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--gold-line); }
 .rx-item .rx-name { flex: 1; font-family: var(--font-display); font-size: 14px; }
 .rx-on { width: 34px; height: 18px; border-radius: 9px; background: var(--gold); position: relative; cursor: pointer; }
@@ -357,12 +369,10 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
           </div>
         </div>
         <div class="rp-panel" id="panel-world">
-          <div class="btn-row" style="margin-bottom:12px">
-            <button class="btn primary" style="flex:1"><svg class="ic"><use href="#i-plus"/></svg> 新建世界书</button>
-          </div>
-          <div class="wi-item"><div class="wi-k">图书馆, 书架, 借书</div><div class="wi-c">放学后的图书馆是千夏的秘密基地。</div></div>
-          <div class="wi-item"><div class="wi-k">雾之馆, 杀人事件</div><div class="wi-c">千夏最近在读的小说。</div></div>
-          <div class="wi-item"><div class="wi-k">图书委员</div><div class="wi-c">千夏是图书委员。</div></div>
+          <button class="btn primary btn-block" style="width:100%;margin-bottom:16px;height:38px"><svg class="ic"><use href="#i-plus"/></svg> 新建世界书</button>
+          <div class="wi-item"><div class="wi-icon"><svg class="ic"><use href="#i-book"/></svg></div><div class="wi-body"><div class="wi-k">图书馆, 书架, 借书</div><div class="wi-c">放学后的图书馆是千夏的秘密基地。</div></div></div>
+          <div class="wi-item"><div class="wi-icon"><svg class="ic"><use href="#i-book"/></svg></div><div class="wi-body"><div class="wi-k">雾之馆, 杀人事件</div><div class="wi-c">千夏最近在读的小说。</div></div></div>
+          <div class="wi-item"><div class="wi-icon"><svg class="ic"><use href="#i-book"/></svg></div><div class="wi-body"><div class="wi-k">图书委员</div><div class="wi-c">千夏是图书委员。</div></div></div>
         </div>
         <div class="rp-panel" id="panel-regex">
           <div class="btn-row" style="margin-bottom:12px">
