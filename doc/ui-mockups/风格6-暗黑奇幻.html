@@ -3,50 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ST-Zero · 企业风格 3 极简黑金</title>
+<title>ST-Zero · 风格 6 暗黑奇幻</title>
 <style>
 /* ============================================================
-   ST-Zero 企业风格 3 · 极简黑金
+   ST-Zero 风格 6 · 暗黑奇幻
    暗色：纯黑 + 香槟金 + 朱红点缀 + 金色粒子
    亮色：和纸米白 + 朱红 + 香槟金点缀 + 和纸纹理
    共同：衬线排版 · 直角 · 玻璃面板 · 编号列表 · 逐字浮现
    ============================================================ */
 :root {
   /* 暗色主题（默认） */
-  --bg-void: #0a0a0a;
-  --bg-deep: #111111;
-  --bg-panel: rgba(17, 17, 17, 0.8);
-  --ink-1: #f5f5f5;
-  --ink-2: #a3a3a3;
-  --ink-3: #666666;
-  --gold: #c9a227;
-  --gold-bright: #e0b93a;
-  --gold-dim: rgba(201, 162, 39, 0.1);
-  --gold-line: rgba(201, 162, 39, 0.3);
-  --vermilion: #c9a227;
-  --vermilion-dim: rgba(201, 162, 39, 0.1);
-  --washi-opacity: 0;
-  --particle-color: '201, 162, 39';
-  --font-display: 'Playfair Display', 'Cormorant Garamond', 'Noto Serif SC', serif;
+  --bg-void: #0d0a08;
+  --bg-deep: #16110d;
+  --bg-panel: rgba(22, 17, 13, 0.8);
+  --ink-1: #e8ddd0;
+  --ink-2: #a08d7a;
+  --ink-3: #5c4f42;
+  --gold: #c8a24a;
+  --gold-bright: #e0c070;
+  --gold-dim: rgba(200, 162, 74, 0.12);
+  --gold-line: rgba(200, 162, 74, 0.25);
+  --vermilion: #8a3a2a;
+  --vermilion-dim: rgba(138, 58, 42, 0.15);
+  --washi-opacity: 0.08;
+  --particle-color: '200, 162, 74';
+  --font-display: 'Cinzel', 'Cormorant Garamond', 'Noto Serif SC', serif;
   --font-body: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-mono: 'JetBrains Mono', 'Consolas', monospace;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 [data-theme="light"] {
-  --bg-void: #fafafa;
-  --bg-deep: #ffffff;
-  --bg-panel: rgba(255, 255, 255, 0.9);
-  --ink-1: #1a1a1a;
-  --ink-2: #6b6b6b;
-  --ink-3: #a8a8a8;
-  --gold: #a8842a;
-  --gold-bright: #c49a3a;
-  --gold-dim: rgba(168, 132, 42, 0.08);
-  --gold-line: rgba(168, 132, 42, 0.25);
-  --vermilion: #a8842a;
-  --vermilion-dim: rgba(168, 132, 42, 0.08);
-  --washi-opacity: 0;
-  --particle-color: '168, 132, 42';
+  --bg-void: #f0e8dc;
+  --bg-deep: #faf5ec;
+  --bg-panel: rgba(250, 245, 236, 0.85);
+  --ink-1: #2a2018;
+  --ink-2: #6b5a48;
+  --ink-3: #a89880;
+  --gold: #9a7a30;
+  --gold-bright: #b89848;
+  --gold-dim: rgba(154, 122, 48, 0.1);
+  --gold-line: rgba(154, 122, 48, 0.25);
+  --vermilion: #6a2a1a;
+  --vermilion-dim: rgba(106, 42, 26, 0.1);
+  --washi-opacity: 0.4;
+  --particle-color: '154, 122, 48';
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { font-size: 14px; }
@@ -59,20 +59,20 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 
 /* ---------- 背景：和纸纹理 + 粒子 + 暗角 ---------- */
 .bg-washi { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: var(--washi-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.5'/%3E%3C/svg%3E"); }
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.6'/%3E%3C/svg%3E"); }
 .bg-particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 .bg-vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(10, 9, 8, 0.4) 100%); }
-[data-theme="light"] .bg-vignette { background: radial-gradient(ellipse at 50% 40%, transparent 60%, rgba(168, 132, 42, 0.05) 100%); }
+  background: radial-gradient(ellipse at 50% 30%, transparent 30%, rgba(13, 10, 8, 0.6) 100%); }
+[data-theme="light"] .bg-vignette { background: radial-gradient(ellipse at 50% 30%, transparent 50%, rgba(106, 42, 26, 0.06) 100%); }
 
 /* ---------- 布局 ---------- */
 .app { position: relative; z-index: 2; height: 100vh; display: flex; flex-direction: column; }
 
 /* 顶栏 */
-.topbar { height: 72px; display: flex; align-items: center; padding: 0 32px; gap: 24px; flex-shrink: 0; border-bottom: 1px solid var(--gold-line); }
-.logo { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-size: 24px; letter-spacing: 0.2em; font-weight: 500; }
-.logo-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
-.logo-seal { width: 22px; height: 22px; border: 1px solid var(--gold); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 11px; font-family: var(--font-display); }
+.topbar { height: 68px; display: flex; align-items: center; padding: 0 32px; gap: 24px; flex-shrink: 0; border-bottom: 1px solid var(--gold-line); }
+.logo { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-size: 24px; letter-spacing: 0.15em; font-weight: 700; }
+.logo-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--vermilion); }
+.logo-seal { width: 24px; height: 24px; border: 1px solid var(--gold); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 11px; font-family: var(--font-display); }
 .topbar-search { position: absolute; left: 50%; transform: translateX(-50%); width: 320px; }
 .topbar-search input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--gold-line); padding: 8px 0; color: var(--ink-1); font-size: 13px; outline: none; font-family: var(--font-body); letter-spacing: 0.05em; transition: all 0.3s var(--ease-out); }
 .topbar-search input:focus { border-bottom-color: var(--gold); }
@@ -102,10 +102,10 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .char-item { display: flex; align-items: center; gap: 14px; padding: 14px 12px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.3s var(--ease-out); }
 .char-item:hover { border-left-color: var(--gold-line); background: var(--gold-dim); }
 .char-item.active { border-left-color: var(--gold); background: var(--gold-dim); }
-.char-num { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); width: 24px; transition: all 0.3s var(--ease-out); }
+.char-num { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); width: 24px; }
 .char-item:hover .char-num, .char-item.active .char-num { color: var(--gold); font-size: 14px; }
 .char-info { flex: 1; min-width: 0; }
-.char-name { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.1em; }
+.char-name { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.08em; }
 .char-item.active .char-name { color: var(--gold); }
 .char-desc { font-size: 11px; color: var(--ink-3); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .char-fav { color: var(--gold); font-size: 12px; display: flex; }
@@ -122,12 +122,12 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .msg.user { align-self: flex-end; flex-direction: row-reverse; }
 @keyframes msg-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 .msg-avatar { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 12px; color: var(--gold); flex-shrink: 0; }
-.msg.user .msg-avatar { border-color: var(--ink-3); color: var(--ink-3); }
+.msg.user .msg-avatar { border-color: var(--vermilion); color: var(--vermilion); }
 .msg-body { min-width: 0; }
 .msg-meta { display: flex; align-items: center; gap: 10px; font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--font-mono); }
 .msg-meta .m-name { color: var(--gold); font-family: var(--font-display); font-size: 12px; letter-spacing: 0.1em; }
 .msg-bubble { border-left: 2px solid var(--gold); padding: 4px 0 4px 18px; font-size: 14px; line-height: 1.9; color: var(--ink-1); font-family: var(--font-display); letter-spacing: 0.03em; }
-.msg.user .msg-bubble { border-left: none; border-right: 2px solid var(--gold); padding: 4px 18px 4px 0; text-align: right; }
+.msg.user .msg-bubble { border-left: none; border-right: 2px solid var(--vermilion); padding: 4px 18px 4px 0; text-align: right; }
 .msg-actions { display: none; gap: 4px; margin-top: 6px; }
 .msg:hover .msg-actions { display: flex; }
 .msg-act { width: 24px; height: 24px; border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
@@ -171,7 +171,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .field input, .field textarea, .field select { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--gold-line); padding: 8px 0; color: var(--ink-1); font-size: 13px; outline: none; font-family: var(--font-body); transition: all 0.3s var(--ease-out); }
 .field textarea { resize: vertical; min-height: 50px; }
 .field input:focus, .field textarea:focus { border-bottom-color: var(--gold); }
-.section-title { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.15em; color: var(--gold); margin: 28px 0 14px; display: flex; align-items: center; gap: 12px; }
+.section-title { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.15em; color: var(--gold); margin: 28px 0 14px; display: flex; align-items: center; gap: 12px; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--gold-line); }
 .btn { height: 36px; padding: 0 20px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; letter-spacing: 0.15em; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
 .btn:hover { border-color: var(--gold); color: var(--gold); }
