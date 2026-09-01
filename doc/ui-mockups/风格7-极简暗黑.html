@@ -181,12 +181,20 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .field input:focus, .field textarea:focus { border-bottom: 1px solid var(--gold-line); }
 .field textarea { resize: vertical; min-height: 50px; }
 .field input:focus, .field textarea:focus { border-bottom-color: var(--gold); }
+.code-box { background: rgba(255, 255, 255, 0.04); border: 1px solid #2e2e2e; border-radius: 4px; padding: 10px 12px; }
+.code-box code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: var(--ink-1); }
+.preset-select { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #cccccc; cursor: pointer; font-size: 14px; color: var(--ink-1); }
+.preset-select .ic { width: 14px; height: 14px; color: #999999; }
+.preset-select:hover { border-bottom-color: var(--gold); }
+[data-theme="light"] .preset-select { border-bottom-color: #d0d0d0; }
+[data-theme="light"] .code-box { background: #f0eeea; border-color: #e0ddd5; }
+[data-theme="light"] .code-box code { color: #4a4a4a; }
 .section-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: var(--ink-1); margin: 24px 0 12px; display: flex; align-items: center; gap: 12px; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--gold-line); }
 .btn { height: 34px; padding: 0 18px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
 .btn:hover { border-color: var(--gold); color: var(--gold); }
-.btn.primary { background: transparent; border: none; color: var(--ink-2); font-weight: 500; }
-.btn.primary:hover { color: var(--gold); }
+.btn.primary { background: transparent; border: 1px solid #c0c0c0; color: var(--ink-1); font-weight: 500; }
+.btn.primary:hover { border-color: var(--gold); color: var(--gold); }
 .btn.primary:hover { background: var(--gold-bright); }
 .btn-row { display: flex; gap: 8px; margin-top: 10px; }
 .icon-btn { width: 30px; height: 30px; border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
@@ -195,7 +203,10 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .check-row input { accent-color: var(--gold); }
 .slider-row { display: flex; align-items: center; gap: 10px; }
 .slider-row input[type=range] { flex: 1; accent-color: var(--gold); }
-.slider-row input[type=number] { width: 60px; background: transparent; border: 1px solid var(--gold-line); padding: 4px 6px; color: var(--ink-1); font-size: 12px; font-family: var(--font-mono); }
+[data-theme="light"] .slider-row input[type=range] { accent-color: #333333; }
+.slider-row input[type=number] { width: 60px; background: transparent; border: none; border-bottom: 1px solid #cccccc; padding: 4px 2px; color: var(--ink-1); font-size: 12px; font-family: var(--font-mono); }
+.slider-row input[type=number]:focus { border-bottom-color: var(--gold); outline: none; }
+[data-theme="light"] .slider-row input[type=number] { border-bottom-color: #d0d0d0; }
 .wi-item { padding: 12px 14px; border-left: 2px solid transparent; cursor: pointer; transition: all 0.3s var(--ease-out); }
 .wi-item:hover { border-left-color: var(--gold); background: var(--gold-dim); }
 [data-theme="light"] .wi-item:hover { background: #f0eeea; }
@@ -367,7 +378,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
           <div class="rx-item"><div class="rx-name">去除星号动作</div><div class="rx-off"></div></div>
         </div>
         <div class="rp-panel" id="panel-preset">
-          <div class="field"><label class="field-label">预设</label><input value="ChatML · 默认"></div>
+          <div class="field"><label class="field-label">预设</label><div class="preset-select"><span>ChatML · 默认</span><svg class="ic"><use href="#i-chevron-down"/></svg></div></div>
           <div class="section-title">采样参数</div>
           <div class="field"><label class="field-label">Temperature</label>
             <div class="slider-row"><input type="range" min="0" max="2" step="0.01" value="0.9"><input type="number" value="0.9" step="0.01"></div>
@@ -376,8 +387,8 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
             <div class="slider-row"><input type="range" min="0" max="1" step="0.01" value="0.95"><input type="number" value="0.95" step="0.01"></div>
           </div>
           <div class="section-title">指令模板</div>
-          <div class="field"><label class="field-label">Input</label><input value="&lt;|im_start|&gt;user"></div>
-          <div class="field"><label class="field-label">Output</label><input value="&lt;|im_start|&gt;assistant"></div>
+          <div class="field"><label class="field-label">Input</label><div class="code-box"><code>&lt;|im_start|&gt;user</code></div></div>
+          <div class="field"><label class="field-label">Output</label><div class="code-box"><code>&lt;|im_start|&gt;assistant</code></div></div>
           <div class="btn-row"><button class="btn primary" style="flex:1">保存预设</button></div>
         </div>
       </div>
