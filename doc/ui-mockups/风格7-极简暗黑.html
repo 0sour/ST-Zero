@@ -151,15 +151,15 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 /* 输入栏：悬浮玻璃 */
 .chat-input { padding: 16px 0 24px; flex-shrink: 0; }
 .input-shell { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 24px; }
-.input-row { display: flex; align-items: center; gap: 12px; background: #262626; padding: 6px 8px 6px 20px; transition: all 0.3s var(--ease-out); }
-[data-theme="light"] .input-row { background: #f5f4f2; border-radius: 2px; }
-[data-theme="light"] .send-btn { background: #e8e6e2; color: #888888; }
-[data-theme="light"] .send-btn:hover { background: #ddd9d3; color: var(--gold); }
+.input-row { display: flex; align-items: center; gap: 12px; background: #262626; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); padding: 6px 8px 6px 20px; transition: all 0.3s var(--ease-out); }
+[data-theme="light"] .input-row { background: #f5f4f2; border-radius: 2px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
+[data-theme="light"] .send-btn { background: transparent; color: #999999; }
+[data-theme="light"] .send-btn:hover { color: var(--gold); }
 .input-row:focus-within { border: 1px solid var(--gold); box-shadow: 0 0 12px var(--gold-dim); }
 .input-row textarea { flex: 1; background: transparent; border: none; outline: none; color: var(--ink-1); font-size: 14px; resize: none; min-height: 36px; max-height: 100px; padding: 8px 0; font-family: var(--font-body); }
 .input-row textarea::placeholder { color: var(--ink-3); }
-.send-btn { width: 40px; height: 36px; border: none; border-radius: 4px; background: #3a3a3a; color: #aaaaaa; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
-.send-btn:hover { color: var(--gold); background: #4a4a4a; }
+.send-btn { width: 40px; height: 36px; border: none; border-radius: 4px; background: transparent; color: #666666; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.send-btn:hover { color: var(--gold); }
 .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .input-tools { display: flex; gap: 2px; margin-bottom: 6px; }
 .it-btn { width: 24px; height: 24px; border: none; background: transparent; color: #c0c0c0; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
@@ -202,11 +202,13 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 [data-theme="light"] .wi-item:hover { background: #f0eeea; }
 .wi-item .wi-k { font-family: var(--font-mono); font-size: 11px; color: var(--ink-1); }
 .wi-item .wi-c { font-size: 12px; color: #a6a6a6; margin-top: 4px; }
-.rx-item { display: flex; align-items: center; gap: 10px; padding: 12px 0; }
-.rx-item .rx-name { flex: 1; font-family: var(--font-display); font-size: 14px; font-weight: 500; }
+.rx-item { display: flex; align-items: center; gap: 10px; padding: 16px 0; }
+.rx-item .rx-name { flex: 1; font-family: var(--font-display); font-size: 14px; font-weight: 600; }
 .rx-on { width: 34px; height: 18px; border-radius: 9px; background: var(--gold); position: relative; cursor: pointer; }
+[data-theme="light"] .rx-on { background: #222222; }
 .rx-on::after { content: ''; position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-void); }
-.rx-off { width: 34px; height: 18px; border-radius: 9px; background: var(--ink-3); position: relative; cursor: pointer; }
+[data-theme="light"] .rx-on::after { background: #ffffff; }
+.rx-off { width: 34px; height: 18px; border-radius: 9px; background: var(--ink-3); border: 1px solid #6a6a6a; position: relative; cursor: pointer; }
 .rx-off::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-1); }
 
 /* 弹窗 */
@@ -588,7 +590,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
   $('#chat-input').addEventListener('input', function () {
     var hasText = this.value.trim().length > 0;
     $('#send-btn').style.color = hasText ? 'var(--gold)' : '';
-    $('#send-btn').style.background = hasText ? 'var(--gold-dim)' : '';
+    $('#send-btn').style.background = hasText ? (document.documentElement.getAttribute('data-theme') === 'light' ? '#e8e6e2' : '#3a3a3a') : '';
   });
 
   /* ============ 右侧 tab ============ */
