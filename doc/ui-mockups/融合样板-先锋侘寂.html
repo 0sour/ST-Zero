@@ -164,7 +164,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 
 /* 右侧栏：竖排大写 tab */
 .right-panel { width: 300px; background: var(--bg-void); border-left: 1px solid #2a2a2a; display: flex; flex-direction: column; min-height: 0; }
-[data-theme="light"] .right-panel { background: #faf9f6; }
+[data-theme="light"] .right-panel { background: #f7f5f2; }
 .rp-tabs { display: flex; border-bottom: 1px solid var(--gold-line); }
 .rp-tab { flex: 1; height: 44px; border: none; background: transparent; color: var(--ink-2); font-size: 10px; font-weight: 600; letter-spacing: 0.2em; cursor: pointer; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; font-family: var(--font-mono); }
 .rp-tab:hover { color: var(--gold); }
@@ -196,9 +196,9 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 [data-theme="light"] .code-tag { color: #a8824a; }
 .btn { height: 34px; padding: 0 18px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; letter-spacing: 0.1em; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
 .btn:hover { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 20px var(--gold-dim); }
-.btn.primary { background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold); font-weight: 600; }
-[data-theme="light"] .btn.primary { background: #a8824a; border-color: #a8824a; color: #fff; }
-[data-theme="light"] .btn.primary:hover { background: #c49a5e; }
+.btn.primary { background: rgba(212, 169, 92, 0.1); border: 1px solid var(--gold); color: var(--gold); font-weight: 600; }
+[data-theme="light"] .btn.primary { background: #fff; border-color: #a8824a; color: #a8824a; }
+[data-theme="light"] .btn.primary:hover { background: rgba(168, 130, 74, 0.08); }
 .btn.primary:hover { background: var(--gold-dim); }
 .btn-row { display: flex; gap: 8px; margin-top: 10px; }
 .icon-btn { width: 30px; height: 30px; border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
@@ -224,12 +224,19 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 [data-theme="light"] .wi-item .wi-k { color: #4a4a4a; }
 [data-theme="light"] .wi-item .wi-c { color: #888888; }
 [data-theme="light"] .wi-item:hover { background: rgba(0, 0, 0, 0.02); }
-.rx-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--gold-line); }
-.rx-item .rx-name { flex: 1; font-family: var(--font-display); font-size: 14px; }
-.rx-on { width: 34px; height: 18px; border-radius: 9px; background: var(--gold); position: relative; cursor: pointer; }
-.rx-on::after { content: ''; position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-void); }
-.rx-off { width: 34px; height: 18px; border-radius: 9px; background: var(--ink-3); position: relative; cursor: pointer; }
-.rx-off::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-1); }
+.rx-item { display: flex; align-items: center; gap: 12px; padding: 14px 0; }
+.rx-item .rx-body { flex: 1; min-width: 0; }
+.rx-item .rx-name { font-family: var(--font-display); font-size: 14px; color: var(--ink-1); }
+.rx-item .rx-desc { font-size: 11px; color: #888888; margin-top: 4px; }
+.group-label { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: #999999; margin-bottom: 8px; font-family: var(--font-mono); }
+.rx-on { width: 36px; height: 20px; border-radius: 10px; background: var(--gold); position: relative; cursor: pointer; transition: background 0.2s var(--ease-out); }
+.rx-on::after { content: ''; position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg-void); transition: transform 0.2s var(--ease-out); }
+.rx-off { width: 36px; height: 20px; border-radius: 10px; background: #4a4a4a; border: 1px solid #5a5a5a; position: relative; cursor: pointer; transition: background 0.2s var(--ease-out); }
+.rx-off::after { content: ''; position: absolute; top: 1px; left: 1px; width: 16px; height: 16px; border-radius: 50%; background: #c0c0c0; transition: transform 0.2s var(--ease-out); }
+[data-theme="light"] .rx-off { background: #e0ddd5; border-color: #d0ccc2; }
+[data-theme="light"] .rx-off::after { background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+[data-theme="light"] .rx-on { background: #a8824a; }
+[data-theme="light"] .rx-on::after { background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
 
 /* 弹窗 */
 .modal-overlay { position: fixed; inset: 0; background: rgba(10, 9, 8, 0.7); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s var(--ease-out); }
@@ -375,12 +382,11 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
           <div class="wi-item"><div class="wi-icon"><svg class="ic"><use href="#i-book"/></svg></div><div class="wi-body"><div class="wi-k">图书委员</div><div class="wi-c">千夏是图书委员。</div></div></div>
         </div>
         <div class="rp-panel" id="panel-regex">
-          <div class="btn-row" style="margin-bottom:12px">
-            <button class="btn primary" style="flex:1"><svg class="ic"><use href="#i-plus"/></svg> 新建脚本</button>
-          </div>
-          <div class="rx-item"><div class="rx-name">清理多余空行</div><div class="rx-on"></div></div>
-          <div class="rx-item"><div class="rx-name">角色名加粗</div><div class="rx-on"></div></div>
-          <div class="rx-item"><div class="rx-name">去除星号动作</div><div class="rx-off"></div></div>
+          <button class="btn primary btn-block" style="width:100%;margin-bottom:20px;height:38px"><svg class="ic"><use href="#i-plus"/></svg> 新建脚本</button>
+          <div class="group-label">处理规则</div>
+          <div class="rx-item"><div class="rx-body"><div class="rx-name">清理多余空行</div><div class="rx-desc">自动去除对话中的空白行</div></div><div class="rx-on"></div></div>
+          <div class="rx-item"><div class="rx-body"><div class="rx-name">角色名加粗</div><div class="rx-desc">让角色名在回复中保持粗体</div></div><div class="rx-on"></div></div>
+          <div class="rx-item"><div class="rx-body"><div class="rx-name">去除星号动作</div><div class="rx-desc">移除 *动作* 格式的描写</div></div><div class="rx-off"></div></div>
         </div>
         <div class="rp-panel" id="panel-preset">
           <div class="field"><label class="field-label">预设</label><div class="preset-select"><span>ChatML · 默认</span><svg class="ic"><use href="#i-chevron-down"/></svg></div></div>
