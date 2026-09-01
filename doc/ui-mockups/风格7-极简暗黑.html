@@ -94,7 +94,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .sidebar-header { padding: 8px 16px 16px; display: flex; gap: 8px; }
 .sb-btn { flex: 1; height: 36px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
 .sb-btn:hover { border-color: var(--gold); color: var(--gold); }
-.sb-btn.primary { background: transparent; border: 1px dashed var(--gold); color: var(--gold); font-weight: 600; }
+.sb-btn.primary { background: transparent; border: 1px dashed #666666; color: var(--ink-1); font-weight: 600; }
 .sb-btn.primary:hover { background: var(--gold-dim); }
 .sb-btn.primary:hover { background: var(--gold-bright); color: var(--bg-void); }
 .sidebar-tools { padding: 0 16px 16px; display: flex; gap: 8px; align-items: center; }
@@ -155,12 +155,12 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .input-row { display: flex; align-items: center; gap: 12px; background: #2c2c2c; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); padding: 6px 8px 6px 20px; transition: all 0.3s var(--ease-out); }
 [data-theme="light"] .input-row { background: #f5f4f2; border: 1px solid #e5e2dc; border-radius: 2px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
 [data-theme="light"] .send-btn { background: transparent; color: #999999; }
-[data-theme="light"] .send-btn:hover { color: var(--gold); }
-.input-row:focus-within { border: 1px solid var(--gold); box-shadow: 0 0 12px var(--gold-dim); }
+[data-theme="light"] .send-btn:hover { color: var(--ink-1); }
+.input-row:focus-within { border: 1px solid #666666; box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); }
 .input-row textarea { flex: 1; background: transparent; border: none; outline: none; color: var(--ink-1); font-size: 14px; resize: none; min-height: 36px; max-height: 100px; padding: 8px 0; font-family: var(--font-body); }
 .input-row textarea::placeholder { color: var(--ink-3); }
 .send-btn { width: 40px; height: 36px; border: none; border-radius: 4px; background: transparent; color: #666666; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
-.send-btn:hover { color: var(--gold); }
+.send-btn:hover { color: var(--ink-1); }
 .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .input-tools { display: flex; gap: 2px; margin-bottom: 6px; }
 .it-btn { width: 24px; height: 24px; border: none; background: transparent; color: #c0c0c0; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
@@ -181,7 +181,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .field input, .field textarea, .field select { width: 100%; background: transparent; border: none; padding: 4px 0; color: var(--ink-1); font-size: 14px; outline: none; font-family: var(--font-body); transition: all 0.3s var(--ease-out); }
 .field input:focus, .field textarea:focus { border-bottom: 1px solid #3a3a3a; }
 .field textarea { resize: vertical; min-height: 50px; }
-.field input:focus, .field textarea:focus { border-bottom-color: var(--gold); }
+.field input:focus, .field textarea:focus { border-bottom-color: #666666; }
 .code-box { background: rgba(255, 255, 255, 0.04); border: 1px solid #2e2e2e; border-radius: 4px; padding: 10px 12px; }
 .code-box code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: #9ab8c8; }
 .preset-select { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #cccccc; cursor: pointer; font-size: 14px; color: var(--ink-1); }
@@ -602,7 +602,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
   });
   $('#chat-input').addEventListener('input', function () {
     var hasText = this.value.trim().length > 0;
-    $('#send-btn').style.color = hasText ? 'var(--gold)' : '';
+    $('#send-btn').style.color = hasText ? 'var(--ink-1)' : '';
     $('#send-btn').style.background = hasText ? (document.documentElement.getAttribute('data-theme') === 'light' ? '#e8e6e2' : '#3a3a3a') : '';
   });
 
