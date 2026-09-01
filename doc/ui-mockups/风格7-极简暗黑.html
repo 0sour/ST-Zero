@@ -110,6 +110,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .char-info { flex: 1; min-width: 0; }
 .char-name { font-family: var(--font-display); font-size: 15px; font-weight: 500; letter-spacing: 0.02em; }
 .char-item.active .char-name { color: #222222; font-weight: 700; }
+[data-theme="light"] .char-item.active .char-name { color: #222222; }
 .char-desc { font-size: 11px; color: var(--ink-2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .char-fav { color: var(--gold); font-size: 12px; display: flex; }
 
@@ -182,7 +183,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .field textarea { resize: vertical; min-height: 50px; }
 .field input:focus, .field textarea:focus { border-bottom-color: var(--gold); }
 .code-box { background: rgba(255, 255, 255, 0.04); border: 1px solid #2e2e2e; border-radius: 4px; padding: 10px 12px; }
-.code-box code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: var(--ink-1); }
+.code-box code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: #9ab8c8; }
 .preset-select { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #cccccc; cursor: pointer; font-size: 14px; color: var(--ink-1); }
 .preset-select .ic { width: 14px; height: 14px; color: #999999; }
 .preset-select:hover { border-bottom-color: var(--gold); }
@@ -205,6 +206,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 .slider-row input[type=range] { flex: 1; accent-color: var(--gold); }
 [data-theme="light"] .slider-row input[type=range] { accent-color: #333333; }
 .slider-row input[type=number] { width: 60px; background: transparent; border: none; border-bottom: 1px solid #cccccc; padding: 4px 2px; color: var(--ink-1); font-size: 12px; font-family: var(--font-mono); }
+.slider-row input[type=number]:hover { border-bottom-color: var(--gold); }
 .slider-row input[type=number]:focus { border-bottom-color: var(--gold); outline: none; }
 [data-theme="light"] .slider-row input[type=number] { border-bottom-color: #d0d0d0; }
 .wi-item { padding: 12px 14px; border-left: 2px solid transparent; cursor: pointer; transition: all 0.3s var(--ease-out); }
@@ -389,7 +391,7 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
           <div class="section-title">指令模板</div>
           <div class="field"><label class="field-label">Input</label><div class="code-box"><code>&lt;|im_start|&gt;user</code></div></div>
           <div class="field"><label class="field-label">Output</label><div class="code-box"><code>&lt;|im_start|&gt;assistant</code></div></div>
-          <div class="btn-row"><button class="btn primary" style="flex:1">保存预设</button></div>
+          <button class="btn primary" style="width:100%;height:36px;margin-top:8px">保存预设</button>
         </div>
       </div>
     </div>
