@@ -112,10 +112,19 @@ function buildChatMessages(input: PromptBuildInput): ChatCompletionMessage[] {
   if (input.character.description) defParts.push(`Description: ${substituteParams(input.character.description, macros)}`);
   if (input.character.personality) defParts.push(`Personality: ${substituteParams(input.character.personality, macros)}`);
   if (input.character.scenario) defParts.push(`Scenario: ${substituteParams(input.character.scenario, macros)}`);
-  if (input.worldInfo.worldInfoBefore) defParts.push(input.worldInfo.worldInfoBefore.trim());
-  if (input.worldInfo.worldInfoAfter) defParts.push(input.worldInfo.worldInfoAfter.trim());
+  if (input.persona) defParts.push(`Persona: ${substituteParams(input.persona, macros)}`);
   if (defParts.length) {
     messages.push({ role: 'system', content: defParts.join('\n') });
+  }
+
+  // 世界书：每条激活条目独立注入（SillyTavern 风格，提升遵循度）
+  if (input.worldInfo.activatedEntries && input.worldInfo.activatedEntries.length) {
+    for (const entry of input.worldInfo.activatedEntries) {
+      const content = (entry.content ?? '').trim();
+      if (!content) continue;
+      const keys = (entry.key ?? []).filter(Boolean).join(', ');
+      messages.push({ role: 'system', content: keys ? `[${keys}] ${content}` : content });
+    }
   }
 
   // 示例对话

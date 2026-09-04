@@ -99,7 +99,7 @@ charactersRouter.patch('/:id', (req, res) => {
   const card = (existing?.json ?? { spec: 'chara_card_v2', spec_version: '2.0', data: {} }) as CharacterCardV2;
   const data = card.data ?? (card as unknown as Record<string, unknown>);
 
-  const allowed = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example', 'creator_notes', 'system_prompt', 'post_history_instructions', 'tags', 'creator', 'character_version'];
+  const allowed = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example', 'creator_notes', 'system_prompt', 'post_history_instructions', 'tags', 'creator', 'character_version', 'alternate_greetings'];
   for (const key of allowed) {
     if (req.body[key] !== undefined) {
       (data as Record<string, unknown>)[key] = req.body[key];

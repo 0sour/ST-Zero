@@ -114,6 +114,9 @@
     createQuickReply: function (label, message) { return request('POST', '/quick-replies', { label: label, message: message }); },
     deleteQuickReply: function (id) { return request('DELETE', '/quick-replies/' + id); },
     adminUsers: function () { return request('GET', '/admin/users'); },
+    adminSiteSettings: function () { return request('GET', '/admin/settings'); },
+    adminUpdateSiteSettings: function (data) { return request('PUT', '/admin/settings', data); },
+    siteInfo: function () { return request('GET', '/auth/site'); },
     adminCreateUser: function (data) { return request('POST', '/admin/users', data); },
     adminUpdateUser: function (id, data) { return request('PATCH', '/admin/users/' + id, data); },
     adminDeleteUser: function (id) { return request('DELETE', '/admin/users/' + id); },
@@ -128,6 +131,56 @@
     if (!ts) return '';
     var d = new Date(ts);
     return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  /** Markdown 行内渲染（先转义防 XSS，再处理粗体/斜体/行内代码） */
+  function inlineMd(s) {
+    return s
+      .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+      .replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
+  }
+
+  /** 安全 Markdown 渲染（按行：代码块/引用/列表/标题 → 行内） */
+  function renderMd(text) {
+    var lines = String(text == null ? '' : text).split('\n');
+    var html = '';
+    var inCode = false;
+    var codeBuf = [];
+    lines.forEach(function (line) {
+      var codeMatch = line.match(/^```(.*)$/);
+      if (codeMatch) {
+        if (inCode) {
+          html += '<pre class="msg-code"><code>' + esc(codeBuf.join('\n')) + '</code></pre>';
+          codeBuf = [];
+          inCode = false;
+        } else {
+          inCode = true;
+        }
+        return;
+      }
+      if (inCode) { codeBuf.push(line); return; }
+      var trimmed = line.trim();
+      var e = esc(line);
+      if (trimmed === '') { html += '<br>'; return; }
+      if (/^#{1,3}\s/.test(trimmed)) {
+        var level = trimmed.match(/^(#+)/)[1].length;
+        html += '<strong class="md-h">' + inlineMd(e.replace(/^#+\s/, '')) + '</strong><br>';
+      } else if (/^>\s?/.test(trimmed)) {
+        html += '<span class="md-quote">' + inlineMd(e.replace(/^>\s?/, '')) + '</span><br>';
+      } else if (/^[-*]\s/.test(trimmed)) {
+        html += '<span class="md-li">· ' + inlineMd(e.replace(/^[-*]\s/, '')) + '</span><br>';
+      } else if (/^\d+\.\s/.test(trimmed)) {
+        html += '<span class="md-li">' + inlineMd(e.replace(/^(\d+\.)\s/, '$1 ')) + '</span><br>';
+      } else {
+        html += inlineMd(e) + '<br>';
+      }
+    });
+    if (inCode && codeBuf.length) {
+      html += '<pre class="msg-code"><code>' + esc(codeBuf.join('\n')) + '</code></pre>';
+    }
+    return html;
   }
 
   function toast(type, icon, msg) {
@@ -156,9 +209,25 @@
   $('#modal-overlay').addEventListener('click', function (e) { if (e.target === $('#modal-overlay')) closeModal(); });
 
   /* ==================== 登录 ==================== */
+  // 登录页公告
+  function loadAnnouncement() {
+    fetch(API_BASE + '/auth/site').then(function (r) { return r.json(); }).then(function (data) {
+      var el = $('#login-announcement');
+      if (data && data.announcement) {
+        el.textContent = data.announcement;
+        el.style.display = 'block';
+      } else {
+        el.style.display = 'none';
+        el.textContent = '';
+      }
+    }).catch(function () {});
+  }
+  loadAnnouncement();
+
   function showLogin() {
     $('#main-page').style.display = 'none';
     $('#login-page').style.display = 'flex';
+    loadAnnouncement();
   }
   function showMain() {
     $('#login-page').style.display = 'none';
@@ -203,6 +272,7 @@
     sortMode: 'recent',
     charSearch: '',
     isGenerating: false,
+    abortController: null,
     currentCard: null,
   };
 
@@ -287,8 +357,45 @@
       $('#edit-first').value = d.first_mes || '';
       $('#edit-example').value = d.mes_example || '';
       renderTags(d.tags || []);
+      renderGreetings(d.alternate_greetings || []);
     }).catch(function () {});
   }
+
+  /* ==================== 备选问候语 ==================== */
+  var currentGreetings = [];
+  function renderGreetings(greetings) {
+    currentGreetings = Array.isArray(greetings) ? greetings.slice() : [];
+    var list = $('#greetings-list');
+    if (!currentGreetings.length) {
+      list.innerHTML = '<div class="qr-empty">暂无备选问候语</div>';
+      return;
+    }
+    list.innerHTML = currentGreetings.map(function (g, i) {
+      return '<div class="wi-item" data-gi="' + i + '" style="display:flex;align-items:center;gap:8px">' +
+        '<div style="flex:1;min-width:0"><div class="wi-c">' + esc(g) + '</div></div>' +
+        '<button class="icon-btn" data-del-greeting="' + i + '" title="删除" style="flex-shrink:0"><svg class="ic"><use href="#i-trash"/></svg></button>' +
+      '</div>';
+    }).join('');
+    $$('#greetings-list [data-del-greeting]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        currentGreetings.splice(parseInt(b.getAttribute('data-del-greeting')), 1);
+        renderGreetings(currentGreetings);
+      });
+    });
+  }
+  $('#btn-add-greeting').addEventListener('click', function () {
+    openModal('添加问候语',
+      '<div class="field"><label class="field-label">问候语内容</label><textarea id="new-greeting-text" style="min-height:100px" placeholder="角色说的第一句话…"></textarea></div>',
+      '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-greeting">添加</button>');
+    $('#modal-ok-greeting').addEventListener('click', function () {
+      var text = $('#new-greeting-text').value.trim();
+      if (!text) { toast('danger', 'i-alert', '内容不能为空'); return; }
+      currentGreetings.push(text);
+      renderGreetings(currentGreetings);
+      closeModal();
+      toast('success', 'i-check', '已添加（记得保存）');
+    });
+  });
 
   /* ==================== 标签 ==================== */
   var currentTags = [];
@@ -347,7 +454,7 @@
         '<div class="msg-avatar">' + esc((name || '?')[0]) + '</div>' +
         '<div class="msg-body">' +
           '<div class="msg-meta"><span class="m-name">' + esc(name) + '</span><span>' + fmtTime(m.send_date) + '</span></div>' +
-          '<div class="msg-bubble">' + esc(m.mes) + '</div>';
+          '<div class="msg-bubble">' + renderMd(m.mes) + '</div>';
       if (!isUser && m.swipes && m.swipes.length > 1) {
         html += '<div class="swipe-row">' +
           '<button class="swipe-btn" data-swipe="-1"><svg class="ic"><use href="#i-chevron-left"/></svg></button>' +
@@ -419,10 +526,14 @@
     if (!text || state.isGenerating) return;
     if (state.groupMode) { sendGroup(text); return; }
     if (!state.currentChat) {
-      // 无聊天时自动创建
+      // 无聊天时自动创建（后端写入角色首条消息/问候语）
       api.createChat(state.currentChar.id, text.slice(0, 20)).then(function (data) {
         state.currentChat = { id: data.id };
-        doSend(text);
+        return api.getChat(data.id).then(function (chatData) {
+          state.messages = chatData.messages || [];
+          renderMessages();
+          return doSend(text);
+        });
       }).catch(function (e) { toast('danger', 'i-alert', e.message); });
       return;
     }
@@ -433,7 +544,8 @@
     var input = $('#chat-input');
     input.value = '';
     state.isGenerating = true;
-    $('#send-btn').disabled = true;
+    state.abortController = new AbortController();
+    setSendBtnGenerating(true);
 
     // 本地追加用户消息
     var userMsg = { name: state.user.display_name || state.user.username, is_user: true, send_date: Date.now(), mes: text };
@@ -453,6 +565,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ content: text }),
+      signal: state.abortController.signal,
     }).then(function (res) {
       if (!res.ok) {
         return res.json().catch(function () { return {}; }).then(function (data) {
@@ -501,18 +614,99 @@
       return pump();
     }).catch(function (e) {
       typing.remove();
-      state.messages.pop();
-      renderMessages();
-      toast('danger', 'i-alert', e.message);
+      if (e.name === 'AbortError') {
+        // 用户主动停止：保留已生成的部分
+        toast('info', 'i-info', '已停止生成');
+      } else {
+        state.messages.pop();
+        renderMessages();
+        toast('danger', 'i-alert', e.message);
+      }
     }).finally(function () {
       state.isGenerating = false;
+      state.abortController = null;
       $('#send-btn').disabled = false;
+      setSendBtnGenerating(false);
     });
   }
 
-  $('#send-btn').addEventListener('click', send);
+  /** 生成中发送按钮变停止按钮 */
+  function setSendBtnGenerating(generating) {
+    var btn = $('#send-btn');
+    var icon = btn.querySelector('use');
+    if (generating) {
+      btn.title = '停止生成';
+      icon.setAttribute('href', '#i-x');
+    } else {
+      btn.title = '';
+      icon.setAttribute('href', '#i-send');
+    }
+  }
+
+  $('#send-btn').addEventListener('click', function () {
+    if (state.isGenerating && state.abortController) {
+      state.abortController.abort();
+      return;
+    }
+    send();
+  });
   $('#chat-input').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+
+  /* ==================== 输入工具（附件/图片/语音，开发中） ==================== */
+  $$('.input-tools .it-btn:not(#btn-qr)').forEach(function (b) {
+    b.addEventListener('click', function () {
+      toast('info', 'i-info', '（' + b.title + '）功能开发中');
+    });
+  });
+
+  /* ==================== 聊天更多菜单 ==================== */
+  $('#btn-chat-more').addEventListener('click', function (e) {
+    e.stopPropagation();
+    $('#chat-more-dropdown').classList.toggle('open');
+  });
+  document.addEventListener('click', function () { $('#chat-more-dropdown').classList.remove('open'); });
+  $('#more-export-chat').addEventListener('click', function () {
+    $('#chat-more-dropdown').classList.remove('open');
+    if (!state.currentChat) { toast('danger', 'i-alert', '无当前聊天'); return; }
+    api.exportChat(state.currentChat.id).then(function (text) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'application/jsonl' }));
+      a.download = (state.currentChar ? state.currentChar.name : 'chat') + '.jsonl';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  });
+  $('#more-import-chat').addEventListener('click', function () {
+    $('#chat-more-dropdown').classList.remove('open');
+    if (!state.currentChar) { toast('danger', 'i-alert', '请先选择角色'); return; }
+    openModal('导入聊天',
+      '<div class="field"><label class="field-label">JSONL 内容</label><textarea id="import-chat-jsonl" style="min-height:160px" placeholder="粘贴聊天 JSONL…"></textarea></div>',
+      '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-import-chat">导入</button>');
+    $('#modal-ok-import-chat').addEventListener('click', function () {
+      api.importChat(state.currentChar.id, $('#import-chat-jsonl').value).then(function () {
+        closeModal();
+        loadChats(state.currentChar.id);
+        toast('success', 'i-check', '已导入');
+      }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+    });
+  });
+  $('#more-delete-chat').addEventListener('click', function () {
+    $('#chat-more-dropdown').classList.remove('open');
+    if (!state.currentChat) { toast('danger', 'i-alert', '无当前聊天'); return; }
+    openModal('删除聊天',
+      '<p style="font-size:13px;color:var(--ink-2)">确定删除当前聊天？此操作不可恢复。</p>',
+      '<button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="modal-ok-del-current-chat">删除</button>');
+    $('#modal-ok-del-current-chat').addEventListener('click', function () {
+      api.deleteChat(state.currentChat.id).then(function () {
+        closeModal();
+        state.currentChat = null;
+        state.messages = [];
+        loadChats(state.currentChar.id);
+        toast('success', 'i-check', '已删除');
+      }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+    });
   });
 
   /* ==================== 快捷回复 ==================== */
@@ -939,21 +1133,50 @@
     if (!g) return;
     api.getGroup(gid).then(function (data) {
       var members = data.members || [];
+      var memberIds = members.map(function (m) { return m.id; });
+      var nonMembers = state.characters.filter(function (c) { return memberIds.indexOf(c.id) === -1; });
       var body =
         '<div class="field"><label class="field-label">群聊名称</label><input id="edit-group-name" value="' + esc(data.group.name) + '"></div>' +
-        '<div class="field"><label class="field-label">成员</label>' +
-        '<div class="wi-list" style="max-height:160px;overflow-y:auto" id="edit-group-members">' +
+        '<div class="field"><label class="field-label">成员（' + members.length + '）</label>' +
+        '<div class="wi-list" style="max-height:140px;overflow-y:auto;margin-bottom:8px" id="edit-group-members">' +
         members.map(function (m) {
           return '<div class="admin-item"><div class="char-avatar">' + (m.avatar_path ? '<img src="' + avatarUrl(m.avatar_path) + '" alt="">' : esc((m.name || '?')[0])) + '</div>' +
-            '<div class="wi-k">' + esc(m.name) + '</div></div>';
+            '<div class="wi-k">' + esc(m.name) + '</div>' +
+            '<button class="icon-btn" data-rm-member="' + m.id + '" title="移除" style="flex-shrink:0"><svg class="ic"><use href="#i-x"/></svg></button></div>';
         }).join('') +
-        '</div></div>';
+        '</div>' +
+        (nonMembers.length
+          ? '<div class="field"><label class="field-label">添加成员（勾选）</label>' +
+            '<div class="wi-list" style="max-height:120px;overflow-y:auto">' +
+            nonMembers.map(function (c) {
+              return '<label class="check-row" style="padding:6px 10px"><input type="checkbox" value="' + c.id + '"> ' + esc(c.name) + '</label>';
+            }).join('') +
+            '</div></div>'
+          : '<p style="font-size:11px;color:var(--ink-3);margin-bottom:12px">没有可添加的角色</p>') +
+        '</div>';
       openModal('管理群聊', body,
         '<button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="modal-del-group">删除群聊</button><button class="btn primary" id="modal-save-group">保存</button>');
+      // 移除成员（本地更新，不重新拉取服务器）
+      $$('#edit-group-members [data-rm-member]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var mid = b.getAttribute('data-rm-member');
+          memberIds = memberIds.filter(function (x) { return x !== mid; });
+          var row = b.closest('.admin-item');
+          if (row) row.remove();
+          // 更新成员计数
+          var label = document.querySelector('#modal-body .field-label');
+          if (label) label.textContent = '成员（' + memberIds.length + '）';
+        });
+      });
       $('#modal-save-group').addEventListener('click', function () {
         var name = $('#edit-group-name').value.trim();
         if (!name) { toast('danger', 'i-alert', '请输入名称'); return; }
-        api.updateGroup(gid, { name: name }).then(function () {
+        // 合并勾选的新成员
+        $$('#modal-body .check-row input:checked').forEach(function (c) {
+          if (memberIds.indexOf(c.value) === -1) memberIds.push(c.value);
+        });
+        if (!memberIds.length) { toast('danger', 'i-alert', '群聊至少需要一名成员'); return; }
+        api.updateGroup(gid, { name: name, member_ids: memberIds }).then(function () {
           closeModal();
           loadGroups();
           toast('success', 'i-check', '已保存');
@@ -1113,6 +1336,7 @@
       first_mes: $('#edit-first').value,
       mes_example: $('#edit-example').value,
       tags: currentTags,
+      alternate_greetings: currentGreetings,
     };
     api.updateCharacter(state.currentChar.id, data).then(function (res) {
       if (res.name) state.currentChar.name = res.name;
@@ -1239,14 +1463,14 @@
       var s = data.settings || {};
       var body =
         '<div class="field"><label class="field-label">标题</label><input id="cs-title" value="' + esc(s.title || '') + '"></div>' +
-        '<div class="field"><label class="field-label">场景覆盖</label><textarea id="cs-scenario">' + esc(s.scenario || '') + '</textarea></div>' +
+        '<div class="field"><label class="field-label">场景覆盖</label><textarea id="cs-scenario">' + esc(s.scenario_override || '') + '</textarea></div>' +
         '<div class="field"><label class="field-label">作者注</label><textarea id="cs-author-note">' + esc(s.author_note || '') + '</textarea></div>';
       openModal('聊天设置', body,
         '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-save-cs">保存</button>');
       $('#modal-save-cs').addEventListener('click', function () {
         api.updateChatSettings(state.currentChat.id, {
           title: $('#cs-title').value.trim(),
-          scenario: $('#cs-scenario').value,
+          scenario_override: $('#cs-scenario').value,
           author_note: $('#cs-author-note').value,
         }).then(function () {
           closeModal();
@@ -1366,7 +1590,9 @@
           '</div>';
         }).join('') +
         '</div>';
-      openModal('管理面板', body, '<button class="btn" onclick="closeModal()">关闭</button>');
+      openModal('管理面板', body,
+        '<button class="btn" id="modal-open-site-settings">站点设置</button><button class="btn" onclick="closeModal()">关闭</button>');
+      $('#modal-open-site-settings').addEventListener('click', function () { openSiteSettings(); });
       $('#modal-add-user').addEventListener('click', function () {
         openModal('新建用户',
           '<div class="field"><label class="field-label">用户名</label><input id="new-user-name"></div>' +
@@ -1475,6 +1701,54 @@
       });
     }).catch(function (e) { toast('danger', 'i-alert', e.message); });
   });
+
+  /* ==================== 站点设置 ==================== */
+  function openSiteSettings() {
+    api.adminSiteSettings().then(function (data) {
+      var s = data.settings || {};
+      var allowReg = s.allowRegistration === true || s.allowRegistration === 'true' || s.allowRegistration === 1;
+      var body =
+        '<div class="section-title">站点设置</div>' +
+        '<label class="check-row" style="margin-bottom:16px"><input type="checkbox" id="site-allow-reg"' + (allowReg ? ' checked' : '') + '> 开放注册</label>' +
+        '<div class="field"><label class="field-label">新用户默认角色</label>' +
+        '<div class="select" id="site-default-role">' +
+        '<div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">' +
+        '<span class="sel-value">' + esc(s.defaultUserRole || 'user') + '</span>' +
+        '<span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>' +
+        '</div>' +
+        '<div class="select-menu" role="listbox">' +
+        '<div class="select-option' + ((s.defaultUserRole || 'user') === 'user' ? ' selected' : '') + '" data-value="user" role="option">用户<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
+        '<div class="select-option' + ((s.defaultUserRole || 'user') === 'admin' ? ' selected' : '') + '" data-value="admin" role="option">管理员<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
+        '</div></div></div>' +
+        '<div class="field"><label class="field-label">站点公告（登录页显示）</label><textarea id="site-announcement">' + esc(s.announcement || '') + '</textarea></div>';
+      openModal('站点设置', body,
+        '<button class="btn" onclick="closeModal()">返回</button><button class="btn primary" id="modal-save-site">保存</button>');
+      // 默认角色下拉
+      var sel = $('#site-default-role');
+      sel.querySelector('.select-trigger').addEventListener('click', function (e) {
+        e.stopPropagation();
+        sel.classList.toggle('open');
+      });
+      $$('.select-option', sel).forEach(function (opt) {
+        opt.addEventListener('click', function () {
+          $$('.select-option', sel).forEach(function (o) { o.classList.remove('selected'); });
+          opt.classList.add('selected');
+          sel.querySelector('.sel-value').textContent = opt.getAttribute('data-value');
+          sel.classList.remove('open');
+        });
+      });
+      $('#modal-save-site').addEventListener('click', function () {
+        api.adminUpdateSiteSettings({
+          allowRegistration: $('#site-allow-reg').checked,
+          defaultUserRole: $('#site-default-role .sel-value').textContent,
+          announcement: $('#site-announcement').value,
+        }).then(function () {
+          closeModal();
+          toast('success', 'i-check', '已保存');
+        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+      });
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  }
 
   /* ==================== 启动 ==================== */
   if (isLoggedIn()) {

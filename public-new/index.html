@@ -54,6 +54,7 @@
   <div class="login-card">
     <div class="login-logo"><div class="logo-badge">S0</div>ST-Zero</div>
     <div class="login-sub">从零开始的 AI 角色扮演</div>
+    <div class="login-announcement" id="login-announcement" style="display:none"></div>
     <div class="login-error" id="login-error"></div>
     <div class="field">
       <label class="field-label">用户名</label>
@@ -73,7 +74,7 @@
   <div class="topbar">
     <div class="logo"><span class="logo-seal">S0</span>ST-ZERO</div>
     <div class="topbar-search">
-      <input id="global-search" placeholder="搜索角色、世界书、正则…">
+      <input id="global-search" placeholder="搜索角色…">
     </div>
     <div class="topbar-actions">
       <button class="tb-btn" id="theme-toggle" title="切换亮暗主题"><svg class="ic"><use href="#i-moon"/></svg></button>
@@ -115,7 +116,15 @@
         <div class="spacer"></div>
         <button class="tb-btn" id="btn-chat-manage" title="聊天管理"><svg class="ic"><use href="#i-folder"/></svg></button>
         <button class="tb-btn" id="btn-chat-settings" title="聊天设置"><svg class="ic"><use href="#i-sliders"/></svg></button>
-        <button class="tb-btn" id="btn-chat-more" title="更多"><svg class="ic"><use href="#i-more"/></svg></button>
+        <div class="dropdown" id="chat-more-dropdown">
+          <button class="tb-btn" id="btn-chat-more" title="更多"><svg class="ic"><use href="#i-more"/></svg></button>
+          <div class="dropdown-menu">
+            <button class="dropdown-item" id="more-export-chat"><svg class="ic"><use href="#i-download"/></svg>导出聊天记录</button>
+            <button class="dropdown-item" id="more-import-chat"><svg class="ic"><use href="#i-upload"/></svg>导入聊天记录</button>
+            <div class="dropdown-sep"></div>
+            <button class="dropdown-item" id="more-delete-chat"><svg class="ic"><use href="#i-trash"/></svg>删除当前聊天</button>
+          </div>
+        </div>
       </div>
       <div class="chat-messages" id="chat-messages">
         <div class="chat-inner" id="chat-inner"></div>
@@ -156,6 +165,11 @@
           <div class="field"><label class="field-label">场景</label><textarea id="edit-scenario"></textarea></div>
           <div class="field"><label class="field-label">首条消息</label><textarea id="edit-first"></textarea></div>
           <div class="field"><label class="field-label">示例对话</label><textarea id="edit-example"></textarea></div>
+          <div class="field">
+            <label class="field-label">备选问候语</label>
+            <div class="wi-list" id="greetings-list"></div>
+            <button class="btn btn-sm" id="btn-add-greeting" style="margin-top:6px"><svg class="ic"><use href="#i-plus"/></svg> 添加问候语</button>
+          </div>
           <div class="field"><label class="field-label">标签</label>
             <div class="tag-input" id="edit-tag-input">
               <div class="tag-list" id="edit-tags"></div>

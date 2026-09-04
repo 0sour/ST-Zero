@@ -55,6 +55,7 @@ button { font-family: var(--font-body); }
 .login-logo { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 700; font-family: var(--font-display); letter-spacing: -0.01em; margin-bottom: 6px; }
 .logo-badge { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--gold-line); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 14px; font-family: var(--font-display); }
 .login-sub { text-align: center; font-size: 12px; color: var(--ink-3); margin-bottom: 24px; }
+.login-announcement { border: 1px solid var(--gold-line); border-left: 2px solid var(--gold); background: var(--gold-dim); color: var(--ink-2); padding: 10px 12px; font-size: 12px; margin-bottom: 14px; white-space: pre-wrap; }
 .login-error { background: var(--gold-dim); border: 1px solid var(--gold-line); color: var(--gold); padding: 8px 12px; font-size: 12.5px; margin-bottom: 14px; display: none; }
 .login-error.show { display: block; }
 
@@ -128,7 +129,13 @@ button { font-family: var(--font-body); }
 .msg-body { min-width: 0; }
 .msg-meta { display: flex; align-items: center; gap: 14px; font-size: 9px; color: #bbbbbb; font-style: italic; margin-bottom: 10px; font-family: var(--font-body); }
 .msg-meta .m-name { color: var(--ink-1); font-family: var(--font-display); font-size: 14px; font-weight: 700; font-style: normal; }
-.msg-bubble { border-left: 2px solid #8a3a2a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); padding: 4px 0 4px 16px; font-size: 14px; line-height: 1.8; color: #f5f5f5; font-family: var(--font-body); white-space: pre-wrap; word-break: break-word; }
+.msg-bubble { border-left: 2px solid #8a3a2a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); padding: 4px 0 4px 16px; font-size: 14px; line-height: 1.8; color: #f5f5f5; font-family: var(--font-body); white-space: normal; word-break: break-word; }
+.msg-bubble code.inline-code { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; font-family: var(--font-mono); font-size: 12px; }
+.msg-bubble .msg-code { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); border-left: 2px solid var(--gold-line); border-radius: 4px; padding: 10px 12px; margin: 6px 0; overflow-x: auto; }
+.msg-bubble .msg-code code { font-family: var(--font-mono); font-size: 12px; color: #9ab8c8; white-space: pre; }
+.msg-bubble .md-quote { display: block; border-left: 2px solid var(--gold-line); padding-left: 10px; color: var(--ink-2); margin: 4px 0; }
+.msg-bubble .md-li { display: block; }
+.msg-bubble .md-h { font-family: var(--font-display); letter-spacing: 0.02em; }
 [data-theme="light"] .msg-bubble { border-left: 2px solid #b08070; background: transparent; padding: 2px 0 2px 20px; font-size: 15px; line-height: 1.8; color: #4a4a4a; }
 .msg.user .msg-bubble { border-left: none; border-right: 2px solid #8a3a2a; padding: 4px 16px 4px 0; text-align: right; }
 [data-theme="light"] .msg.user .msg-bubble { border-right: 2px solid #b08070; background: transparent; padding: 2px 20px 2px 0; font-size: 15px; line-height: 1.8; color: #4a4a4a; }
@@ -331,6 +338,8 @@ button { font-family: var(--font-body); }
 .dropdown-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: none; background: transparent; color: var(--ink-2); font-size: 12.5px; cursor: pointer; text-align: left; transition: all 0.2s var(--ease-out); appearance: none; -webkit-appearance: none; }
 .dropdown-item:hover { color: var(--gold); background: var(--gold-dim); }
 .dropdown-item.selected { color: var(--ink-1); font-weight: 600; }
+.dropdown-item.danger { color: var(--gold); }
+.dropdown-item.danger:hover { background: var(--gold-dim); color: var(--gold); }
 .dropdown-sep { height: 1px; background: var(--line); margin: 4px 0; }
 
 /* 管理面板 */

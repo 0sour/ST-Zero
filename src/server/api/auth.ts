@@ -46,9 +46,26 @@ authRouter.post('/login', async (req, res) => {
   }
 });
 
-/** 注册（仅开放注册时） */
+/** 站点设置（数据库优先，环境变量兜底） */
+function siteSetting(key: string): unknown {
+  const row = getDb().prepare('SELECT value FROM site_settings WHERE key = ?').get(key) as { value: string } | undefined;
+  if (!row) return undefined;
+  try { return JSON.parse(row.value); } catch { return row.value; }
+}
+function allowRegistration(): boolean {
+  const v = siteSetting('allowRegistration');
+  if (v !== undefined) return v === true || v === 'true' || v === 1;
+  return config.allowRegistration;
+}
+function defaultUserRole(): string {
+  const v = siteSetting('defaultUserRole');
+  if (v !== undefined) return String(v);
+  return config.defaultUserRole;
+}
+
+/** 注册（站点设置优先，环境变量兜底） */
 authRouter.post('/register', (req, res) => {
-  if (!config.allowRegistration) {
+  if (!allowRegistration()) {
     return res.status(403).json({ error: 'Registration is disabled' });
   }
   const { username, password, display_name } = req.body as { username?: string; password?: string; display_name?: string };
@@ -65,7 +82,7 @@ authRouter.post('/register', (req, res) => {
   }
   // 首个用户自动成为 admin（Open WebUI 模式）
   const count = (db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number }).c;
-  const role = count === 0 ? 'admin' : config.defaultUserRole;
+  const role = count === 0 ? 'admin' : defaultUserRole();
   const now = Date.now();
   const id = randomUUID();
   db.prepare(
@@ -75,6 +92,16 @@ authRouter.post('/register', (req, res) => {
   const token = signToken(user);
   setSessionCookie(res, token);
   return res.status(201).json({ token, user: toSafeUser(user) });
+});
+
+/** 站点公开信息（公告等，登录页展示无需鉴权） */
+authRouter.get('/site', (_req, res) => {
+  const row = getDb().prepare('SELECT value FROM site_settings WHERE key = ?').get('announcement') as { value: string } | undefined;
+  let announcement = '';
+  if (row) {
+    try { announcement = String(JSON.parse(row.value)); } catch { announcement = row.value; }
+  }
+  return res.json({ announcement });
 });
 
 /** 当前用户信息 */

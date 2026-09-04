@@ -33,10 +33,29 @@ chatsRouter.get('/', (req, res) => {
 
 /** 创建聊天 */
 chatsRouter.post('/', (req, res) => {
-  const { character_id, title } = req.body as { character_id?: string; title?: string };
+  const { character_id, title, greeting_index } = req.body as { character_id?: string; title?: string; greeting_index?: number };
   if (!character_id) return res.status(400).json({ error: 'character_id is required' });
   const char = getDb().prepare('SELECT * FROM characters WHERE id = ? AND user_id = ?').get(character_id, req.user!.id);
   if (!char) return res.status(404).json({ error: 'Character not found' });
+
+  // 读取角色卡，取首条消息（指定序号或随机备选问候语 → 首条）
+  const png = fs.readFileSync(path.join(config.dataDir, char.avatar_path as string));
+  const parsed = readCharacterCardJson(png);
+  const card = normalizeToV2(parsed?.json ?? { spec: 'chara_card_v2', spec_version: '2.0', data: { name: char.name } });
+  const data = card.data;
+  let greeting = (data.first_mes ?? '').trim();
+  const alternates = Array.isArray(data.alternate_greetings) ? data.alternate_greetings.filter((g) => typeof g === 'string' && g.trim()) : [];
+  if (alternates.length) {
+    const idx = typeof greeting_index === 'number' && greeting_index >= 0 && greeting_index < alternates.length
+      ? greeting_index
+      : Math.floor(Math.random() * alternates.length);
+    greeting = alternates[idx].trim();
+  }
+  // 宏替换（{{user}} → 用户显示名）
+  const userName = req.user!.display_name || req.user!.username;
+  if (greeting) {
+    greeting = greeting.replaceAll('{{user}}', userName).replaceAll('{{User}}', userName).replaceAll('{{USER}}', userName);
+  }
 
   const id = randomUUID();
   const now = Date.now();
@@ -44,12 +63,15 @@ chatsRouter.post('/', (req, res) => {
   const relPath = path.join('users', req.user!.id, 'chats', fileName);
   const absPath = path.join(config.dataDir, relPath);
   fs.mkdirSync(path.dirname(absPath), { recursive: true });
-  fs.writeFileSync(absPath, serializeChatJsonl(createHeader(), []));
+  const messages: ChatMessage[] = greeting
+    ? [{ name: data.name, is_user: false, send_date: now, mes: greeting, extra: {} }]
+    : [];
+  fs.writeFileSync(absPath, serializeChatJsonl(createHeader(), messages));
 
   getDb()
     .prepare('INSERT INTO chats (id, user_id, character_id, title, file_path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
     .run(id, req.user!.id, character_id, title || '新聊天', relPath, now, now);
-  return res.status(201).json({ id });
+  return res.status(201).json({ id, greeting });
 });
 
 /** 聊天消息 */
@@ -89,7 +111,7 @@ chatsRouter.post('/:id/messages', async (req, res) => {
   const card = normalizeToV2(parsed?.json ?? { spec: 'chara_card_v2', spec_version: '2.0', data: { name: 'Unknown' } });
   const data = card.data;
 
-  // 加载用户设置（世界书/正则/预设/后端）
+  // 加载用户设置（世界书/正则/预设/后端/persona）
   const settings = JSON.parse(
     (getDb().prepare('SELECT data FROM settings WHERE user_id = ?').get(req.user!.id) as { data?: string } | undefined)?.data ?? '{}',
   ) as {
@@ -98,7 +120,11 @@ chatsRouter.post('/:id/messages', async (req, res) => {
     presets?: Array<Record<string, unknown>>;
     activePreset?: string | null;
     selectedWorlds?: string[];
+    persona?: { name?: string; description?: string };
   };
+
+  // 聊天级设置（场景覆盖/作者注，来自 JSONL header）
+  const chatMeta = (header.chat_metadata ?? {}) as { scenario?: string; scenario_override?: string; author_note?: string; world_id?: string | null };
 
   // 加载世界书（用户选中的 + 角色卡内嵌 character_book）
   const wiEntries: WorldInfoEntry[] = [];
@@ -118,7 +144,28 @@ chatsRouter.post('/:id/messages', async (req, res) => {
     if (embedded) wiEntries.push(...Object.values(embedded.entries));
   }
 
-  // 世界书扫描（真实条目）
+  // 聊天级世界书（聊天设置里选中的世界书，未在全局列表中的补充加载）
+  if (chatMeta.world_id && !selectedWorlds.includes(chatMeta.world_id)) {
+    try {
+      const wrow = getDb().prepare('SELECT * FROM worlds WHERE id = ? AND user_id = ?').get(chatMeta.world_id, req.user!.id) as Record<string, unknown> | undefined;
+      if (wrow) {
+        const wtext = fs.readFileSync(path.join(config.dataDir, wrow.file_path as string), 'utf-8');
+        const wi = parseWorldInfo(JSON.parse(wtext));
+        wiEntries.push(...Object.values(wi.entries));
+      }
+    } catch { /* 跳过损坏世界书 */ }
+  }
+  // 作者注（聊天设置）以常驻条目注入
+  const authorNote = chatMeta.author_note ?? '';
+  if (authorNote) wiEntries.push({
+    uid: -1,
+    key: [],
+    constant: true,
+    content: authorNote,
+    role: 0,
+    order: 999,
+  });
+  // 世界书扫描（真实条目 + 作者注）
   const worldInfo = scanWorldInfo({
     entries: wiEntries,
     chatMessages: messages,
@@ -137,6 +184,12 @@ chatsRouter.post('/:id/messages', async (req, res) => {
     post_history_instructions: data.post_history_instructions,
     alternate_greetings: data.alternate_greetings,
   };
+  // 聊天级场景覆盖（有则替代角色卡 scenario）
+  const scenarioOverride = chatMeta.scenario_override ?? chatMeta.scenario ?? '';
+  if (scenarioOverride) promptData.scenario = scenarioOverride;
+  // Persona（用户角色设定）注入
+  const persona = settings.persona ?? {};
+  const personaText = [persona.name, persona.description].filter(Boolean).join('\n');
 
   // 后端配置
   const backend = settings.backend ?? { type: 'openai', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5', apiKey: '' };
@@ -154,12 +207,12 @@ chatsRouter.post('/:id/messages', async (req, res) => {
   const instruct = activePreset?.instruct ?? {};
   const context = activePreset?.context ?? {};
 
-  // 构建 prompt（真实世界书/正则/预设）
+  // 构建 prompt（真实世界书/正则/预设/persona）
   const promptResult = buildPrompt({
     character: promptData,
     chat: messages,
     worldInfo,
-    persona: '',
+    persona: personaText,
     userName: req.user!.display_name || req.user!.username,
     instruct: {
       input_sequence: (instruct.input_sequence as string) ?? '<|im_start|>user',
