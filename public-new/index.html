@@ -77,6 +77,7 @@
       <input id="global-search" placeholder="搜索角色…">
     </div>
     <div class="topbar-actions">
+      <button class="tb-btn mobile-menu-btn" id="btn-mobile-menu" title="菜单"><svg class="ic"><use href="#i-menu"/></svg></button>
       <button class="tb-btn" id="theme-toggle" title="切换亮暗主题"><svg class="ic"><use href="#i-moon"/></svg></button>
       <button class="tb-btn" id="btn-settings" title="设置"><svg class="ic"><use href="#i-settings"/></svg></button>
       <div class="avatar" id="user-avatar" title="用户菜单">S</div>
@@ -84,8 +85,10 @@
   </div>
 
   <div class="body">
+    <!-- 移动端遮罩 -->
+    <div class="mobile-overlay" id="mobile-overlay"></div>
     <!-- 左侧栏 -->
-    <div class="sidebar">
+    <div class="sidebar" id="main-sidebar">
       <div class="sidebar-label">Characters</div>
       <div class="sidebar-header">
         <button class="sb-btn primary" id="btn-new-char"><svg class="ic"><use href="#i-plus"/></svg> 新建</button>
@@ -214,6 +217,18 @@
           </div>
           <div class="field"><label class="field-label">Top P</label>
             <div class="slider-row"><input type="range" id="top-p" min="0" max="1" step="0.01" value="0.95"><input type="number" id="top-p-num" value="0.95" step="0.01"></div>
+          </div>
+          <div class="field"><label class="field-label">Top K</label>
+            <div class="slider-row"><input type="range" id="top-k" min="0" max="100" step="1" value="40"><input type="number" id="top-k-num" value="40" step="1"></div>
+          </div>
+          <div class="field"><label class="field-label">Max Tokens</label>
+            <div class="slider-row"><input type="range" id="max-tokens" min="32" max="2048" step="32" value="300"><input type="number" id="max-tokens-num" value="300" step="32"></div>
+          </div>
+          <div class="field"><label class="field-label">Frequency Penalty</label>
+            <div class="slider-row"><input type="range" id="freq-penalty" min="0" max="2" step="0.01" value="0"><input type="number" id="freq-penalty-num" value="0" step="0.01"></div>
+          </div>
+          <div class="field"><label class="field-label">Presence Penalty</label>
+            <div class="slider-row"><input type="range" id="presence-penalty" min="0" max="2" step="0.01" value="0"><input type="number" id="presence-penalty-num" value="0" step="0.01"></div>
           </div>
           <div class="section-title">指令模板</div>
           <div class="field"><label class="field-label">Input</label><div class="code-box"><code id="instruct-input">&lt;|im_start|&gt;user</code></div></div>

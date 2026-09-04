@@ -22,6 +22,69 @@ function userDir(userId: string): string {
   return path.join(config.dataDir, 'users', userId);
 }
 
+/** 加载用户所有世界书条目（全局选中 + 聊天级 + 角色卡内嵌 + 作者注），供扫描预览复用 */
+function loadWorldEntries(userId: string, characterId: string, chatMeta: { world_id?: string | null; author_note?: string }): WorldInfoEntry[] {
+  const settings = JSON.parse(
+    (getDb().prepare('SELECT data FROM settings WHERE user_id = ?').get(userId) as { data?: string } | undefined)?.data ?? '{}',
+  ) as { selectedWorlds?: string[] };
+  const wiEntries: WorldInfoEntry[] = [];
+  const selectedWorlds = settings.selectedWorlds ?? [];
+  for (const worldId of selectedWorlds) {
+    const wrow = getDb().prepare('SELECT * FROM worlds WHERE id = ? AND user_id = ?').get(worldId, userId) as Record<string, unknown> | undefined;
+    if (!wrow) continue;
+    try {
+      const wtext = fs.readFileSync(path.join(config.dataDir, wrow.file_path as string), 'utf-8');
+      const wi = parseWorldInfo(JSON.parse(wtext));
+      wiEntries.push(...Object.values(wi.entries));
+    } catch { /* 跳过损坏世界书 */ }
+  }
+  // 聊天级世界书（未在全局列表中的补充加载）
+  if (chatMeta.world_id && !selectedWorlds.includes(chatMeta.world_id)) {
+    try {
+      const wrow = getDb().prepare('SELECT * FROM worlds WHERE id = ? AND user_id = ?').get(chatMeta.world_id, userId) as Record<string, unknown> | undefined;
+      if (wrow) {
+        const wtext = fs.readFileSync(path.join(config.dataDir, wrow.file_path as string), 'utf-8');
+        const wi = parseWorldInfo(JSON.parse(wtext));
+        wiEntries.push(...Object.values(wi.entries));
+      }
+    } catch { /* 跳过损坏世界书 */ }
+  }
+  // 角色卡内嵌世界书（character_book）
+  try {
+    const char = getDb().prepare('SELECT * FROM characters WHERE id = ? AND user_id = ?').get(characterId, userId) as Record<string, unknown> | undefined;
+    if (char) {
+      const png = fs.readFileSync(path.join(config.dataDir, char.avatar_path as string));
+      const parsed = readCharacterCardJson(png);
+      const card = normalizeToV2(parsed?.json ?? { spec: 'chara_card_v2', spec_version: '2.0', data: {} });
+      if (card.data.character_book) {
+        const embedded = extractCharacterBook(card.data.character_book);
+        if (embedded) wiEntries.push(...Object.values(embedded.entries));
+      }
+    }
+  } catch { /* 跳过损坏角色卡 */ }
+  // 作者注（常驻）
+  const authorNote = chatMeta.author_note ?? '';
+  if (authorNote) wiEntries.push({ uid: -1, key: [], constant: true, content: authorNote, role: 0, order: 999 });
+  return wiEntries;
+}
+
+/** 世界书激活预览：扫描当前聊天，返回激活条目 + token 占用 */
+chatsRouter.get('/:id/world-preview', (req, res) => {
+  const row = getDb().prepare('SELECT * FROM chats WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id);
+  if (!row) return res.status(404).json({ error: 'Chat not found' });
+  const absPath = path.join(config.dataDir, row.file_path as string);
+  const { header, messages } = parseChatJsonl(fs.readFileSync(absPath, 'utf-8'));
+  const chatMeta = (header.chat_metadata ?? {}) as { world_id?: string | null; author_note?: string };
+  const entries = loadWorldEntries(req.user!.id, row.character_id as string, chatMeta);
+  const worldInfo = scanWorldInfo({ entries, chatMessages: messages, settings: DEFAULT_WI_SETTINGS, maxContext: 4096 });
+  const activated = (worldInfo.activatedEntries ?? []).filter((e) => (e.content ?? '').trim());
+  return res.json({
+    activated: activated.map((e) => ({ keys: (e.key ?? []).filter(Boolean).join(', '), content: (e.content ?? '').slice(0, 120), constant: !!e.constant })),
+    tokenCount: worldInfo.tokenCount,
+    totalEntries: entries.length,
+  });
+});
+
 /** 聊天列表 */
 chatsRouter.get('/', (req, res) => {
   const characterId = req.query.characterId as string | undefined;
@@ -206,6 +269,15 @@ chatsRouter.post('/:id/messages', async (req, res) => {
   const sampling = activePreset?.sampling ?? {};
   const instruct = activePreset?.instruct ?? {};
   const context = activePreset?.context ?? {};
+  const genMaxTokens = Number(sampling.maxTokens ?? 300);
+  const genOptions = {
+    maxTokens: genMaxTokens,
+    temperature: sampling.temperature !== undefined ? Number(sampling.temperature) : undefined,
+    topP: sampling.topP !== undefined ? Number(sampling.topP) : undefined,
+    topK: sampling.topK !== undefined ? Number(sampling.topK) : undefined,
+    frequencyPenalty: sampling.frequencyPenalty !== undefined ? Number(sampling.frequencyPenalty) : undefined,
+    presencePenalty: sampling.presencePenalty !== undefined ? Number(sampling.presencePenalty) : undefined,
+  };
 
   // 构建 prompt（真实世界书/正则/预设/persona）
   const promptResult = buildPrompt({
@@ -229,7 +301,7 @@ chatsRouter.post('/:id/messages', async (req, res) => {
       chat_start: (context.chat_start as string) ?? '***',
     },
     maxContext: 4096,
-    maxTokens: 300,
+    maxTokens: genMaxTokens,
     regexScripts,
     mode: 'chat',
   });
@@ -243,8 +315,8 @@ chatsRouter.post('/:id/messages', async (req, res) => {
   let fullReply = '';
   try {
     const stream = backend.type === 'text'
-      ? generateTextCompletion(backend, promptResult.prompt, { maxTokens: 300 })
-      : generateChatCompletion(backend, promptResult.messages, { maxTokens: 300 });
+      ? generateTextCompletion(backend, promptResult.prompt, genOptions)
+      : generateChatCompletion(backend, promptResult.messages, genOptions);
     for await (const chunk of stream) {
       fullReply += chunk;
       res.write(`data: ${JSON.stringify({ delta: chunk })}\n\n`);
@@ -266,6 +338,126 @@ chatsRouter.post('/:id/messages', async (req, res) => {
     res.end();
   } catch (e) {
     console.error('[chats] Generation failed:', e);
+    res.write(`data: ${JSON.stringify({ error: (e as Error).message })}\n\n`);
+    res.end();
+  }
+});
+
+/** 生成备选回复（swipe）：给最后一条 AI 消息再生成一条备选 */
+chatsRouter.post('/:id/swipe', async (req, res) => {
+  const row = getDb().prepare('SELECT * FROM chats WHERE id = ? AND user_id = ?').get(req.params.id, req.user!.id);
+  if (!row) return res.status(404).json({ error: 'Chat not found' });
+  const absPath = path.join(config.dataDir, row.file_path as string);
+  const { header, messages } = parseChatJsonl(fs.readFileSync(absPath, 'utf-8'));
+  // 找最后一条 AI 消息
+  let lastAiIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (!messages[i].is_user) { lastAiIdx = i; break; }
+  }
+  if (lastAiIdx < 0) return res.status(400).json({ error: 'No AI message to swipe' });
+
+  // 复用生成链路的 prompt 构建（世界书/正则/预设/persona）
+  const settings = JSON.parse(
+    (getDb().prepare('SELECT data FROM settings WHERE user_id = ?').get(req.user!.id) as { data?: string } | undefined)?.data ?? '{}',
+  ) as {
+    backend?: BackendConfig;
+    regex?: RegexScript[];
+    presets?: Array<Record<string, unknown>>;
+    activePreset?: string | null;
+    persona?: { name?: string; description?: string };
+  };
+  const chatMeta = (header.chat_metadata ?? {}) as { scenario?: string; scenario_override?: string; author_note?: string; world_id?: string | null };
+  const entries = loadWorldEntries(req.user!.id, row.character_id as string, chatMeta);
+  const worldInfo = scanWorldInfo({ entries, chatMessages: messages, settings: DEFAULT_WI_SETTINGS, maxContext: 4096 });
+  const char = getDb().prepare('SELECT * FROM characters WHERE id = ?').get(row.character_id as string) as Record<string, unknown>;
+  const png = fs.readFileSync(path.join(config.dataDir, char.avatar_path as string));
+  const parsed = readCharacterCardJson(png);
+  const card = normalizeToV2(parsed?.json ?? { spec: 'chara_card_v2', spec_version: '2.0', data: { name: 'Unknown' } });
+  const data = card.data;
+  const promptData: CharacterPromptData = {
+    name: data.name,
+    description: data.description ?? '',
+    personality: data.personality ?? '',
+    scenario: (chatMeta.scenario_override ?? chatMeta.scenario ?? data.scenario) ?? '',
+    first_mes: data.first_mes ?? '',
+    mes_example: data.mes_example ?? '',
+    system_prompt: data.system_prompt,
+    post_history_instructions: data.post_history_instructions,
+    alternate_greetings: data.alternate_greetings,
+  };
+  const persona = settings.persona ?? {};
+  const personaText = [persona.name, persona.description].filter(Boolean).join('\n');
+  const activePreset = settings.presets?.find((p) => p.name === settings.activePreset) as
+    | { sampling?: Record<string, unknown>; instruct?: Record<string, unknown>; context?: Record<string, unknown> }
+    | undefined;
+  const sampling = activePreset?.sampling ?? {};
+  const instruct = activePreset?.instruct ?? {};
+  const context = activePreset?.context ?? {};
+  const regexScripts: RegexScript[] = [...(settings.regex ?? [])];
+  const scopedRegex = (data.extensions?.regex_scripts as RegexScript[] | undefined) ?? [];
+  regexScripts.push(...scopedRegex);
+  const genMaxTokens = Number(sampling.maxTokens ?? 300);
+  const genOptions = {
+    maxTokens: genMaxTokens,
+    temperature: sampling.temperature !== undefined ? Number(sampling.temperature) : undefined,
+    topP: sampling.topP !== undefined ? Number(sampling.topP) : undefined,
+    topK: sampling.topK !== undefined ? Number(sampling.topK) : undefined,
+    frequencyPenalty: sampling.frequencyPenalty !== undefined ? Number(sampling.frequencyPenalty) : undefined,
+    presencePenalty: sampling.presencePenalty !== undefined ? Number(sampling.presencePenalty) : undefined,
+  };
+  const promptResult = buildPrompt({
+    character: promptData,
+    chat: messages,
+    worldInfo,
+    persona: personaText,
+    userName: req.user!.display_name || req.user!.username,
+    instruct: {
+      input_sequence: (instruct.input_sequence as string) ?? '<|im_start|>user',
+      output_sequence: (instruct.output_sequence as string) ?? '<|im_start|>assistant',
+      system_sequence: (instruct.system_sequence as string) ?? '<|im_start|>system',
+      stop_sequence: (instruct.stop_sequence as string) ?? '<|im_end|>',
+      wrap: (instruct.wrap as boolean) ?? true,
+      macro: (instruct.macro as boolean) ?? true,
+      names_behavior: ((instruct.names_behavior as string) ?? 'force') as 'force' | 'auto' | 'none',
+    },
+    context: {
+      story_string: (context.story_string as string) ?? '{{system}}\n{{description}}\n{{chatHistory}}',
+      example_separator: (context.example_separator as string) ?? '***',
+      chat_start: (context.chat_start as string) ?? '***',
+    },
+    maxContext: 4096,
+    maxTokens: genMaxTokens,
+    regexScripts,
+    mode: 'chat',
+  });
+  const backend = settings.backend ?? { type: 'openai', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5', apiKey: '' };
+
+  // SSE 流式
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  let fullReply = '';
+  try {
+    const stream = backend.type === 'text'
+      ? generateTextCompletion(backend, promptResult.prompt, genOptions)
+      : generateChatCompletion(backend, promptResult.messages, genOptions);
+    for await (const chunk of stream) {
+      fullReply += chunk;
+      res.write(`data: ${JSON.stringify({ delta: chunk })}\n\n`);
+    }
+    // 追加到 swipes
+    const aiMsg = messages[lastAiIdx];
+    if (!aiMsg) return;
+    const cur = aiMsg.mes ?? '';
+    aiMsg.swipes = [...(aiMsg.swipes ?? [cur]), fullReply];
+    aiMsg.swipe_id = (aiMsg.swipes.length - 1);
+    fs.writeFileSync(absPath, serializeChatJsonl(header, messages));
+    getDb().prepare('UPDATE chats SET updated_at = ? WHERE id = ?').run(Date.now(), row.id);
+    res.end();
+  } catch (e) {
+    console.error('[chats] Swipe failed:', e);
     res.write(`data: ${JSON.stringify({ error: (e as Error).message })}\n\n`);
     res.end();
   }

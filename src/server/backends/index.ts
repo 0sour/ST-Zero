@@ -16,6 +16,8 @@ export interface GenerateOptions {
   temperature?: number;
   topP?: number;
   topK?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
   stop?: string[];
 }
 
@@ -69,6 +71,9 @@ export async function* generateChatCompletion(
       max_tokens: options.maxTokens,
       temperature: options.temperature ?? 0.9,
       top_p: options.topP ?? 0.95,
+      ...(options.topK !== undefined ? { top_k: options.topK } : {}),
+      ...(options.frequencyPenalty !== undefined ? { frequency_penalty: options.frequencyPenalty } : {}),
+      ...(options.presencePenalty !== undefined ? { presence_penalty: options.presencePenalty } : {}),
       stream: true,
     }),
   });
@@ -99,6 +104,9 @@ export async function* generateTextCompletion(
       max_tokens: options.maxTokens,
       temperature: options.temperature ?? 0.9,
       top_p: options.topP ?? 0.95,
+      ...(options.topK !== undefined ? { top_k: options.topK } : {}),
+      ...(options.frequencyPenalty !== undefined ? { frequency_penalty: options.frequencyPenalty } : {}),
+      ...(options.presencePenalty !== undefined ? { presence_penalty: options.presencePenalty } : {}),
       stream: true,
     }),
   });
@@ -127,6 +135,7 @@ export async function* generateKobold(
       temperature: options.temperature ?? 0.9,
       top_p: options.topP ?? 0.95,
       top_k: options.topK ?? 40,
+      ...(options.frequencyPenalty !== undefined ? { rep_pen: options.frequencyPenalty } : {}),
       stream: true,
     }),
   });
