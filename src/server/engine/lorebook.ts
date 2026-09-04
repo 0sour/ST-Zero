@@ -183,17 +183,16 @@ export function scanWorldInfo(input: WorldInfoScanInput): WorldInfoScanResult {
     }
   }
 
-  // 3. 预算裁剪（按 priority 从小到大丢弃，ignoreBudget 豁免）
+  // 3. 预算裁剪（按 priority 从小到大丢弃；constant 常驻条目豁免预算，始终注入）
   const budgetTokens = Math.floor((maxContext * settings.budget) / 100);
-  let total = activated.reduce((sum, e) => sum + estimateTokens(e.content ?? ''), 0);
+  // 常驻条目不占预算
+  const constantOnes = activated.filter((e) => e.constant || e.ignoreBudget);
+  const others = activated.filter((e) => !e.constant && !e.ignoreBudget);
+  let total = others.reduce((sum, e) => sum + estimateTokens(e.content ?? ''), 0);
   if (total > budgetTokens) {
-    const sorted = [...activated].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+    const sorted = [...others].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
     const kept: WorldInfoEntry[] = [];
     for (const e of sorted) {
-      if (e.ignoreBudget) {
-        kept.push(e);
-        continue;
-      }
       const t = estimateTokens(e.content ?? '');
       if (total <= budgetTokens) {
         kept.push(e);
@@ -202,7 +201,11 @@ export function scanWorldInfo(input: WorldInfoScanInput): WorldInfoScanResult {
       }
     }
     activated.length = 0;
-    activated.push(...kept);
+    activated.push(...constantOnes, ...kept);
+  } else if (constantOnes.length) {
+    // 预算未超但常驻存在时也需合并（保持 order 排序）
+    activated.length = 0;
+    activated.push(...constantOnes, ...others);
   }
 
   // 4. 按插入顺序排序
