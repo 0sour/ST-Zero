@@ -1313,6 +1313,72 @@
     }).catch(function (e) { toast('danger', 'i-alert', e.message); });
   });
 
+  /* ==================== 预设导入（SillyTavern 兼容） ==================== */
+  $('#btn-import-preset').addEventListener('click', function () { $('#import-preset-json').click(); });
+  $('#import-preset-json').addEventListener('change', function () {
+    var f = this.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var json = JSON.parse(r.result);
+        importPresetJson(json, f.name);
+      } catch (e) { toast('danger', 'i-alert', '无效的 JSON 文件'); }
+    };
+    r.readAsText(f);
+    this.value = '';
+  });
+  function importPresetJson(json, fileName) {
+    // 酒馆预设可能是单个对象或数组
+    var list = Array.isArray(json) ? json : [json];
+    var imported = [];
+    list.forEach(function (item) {
+      if (!item || typeof item !== 'object') return;
+      // 名称：优先顶层 name，否则文件名
+      var name = (item.name || (fileName || '预设').replace(/\.json$/i, '')).trim();
+      // 酒馆 instruct 模板（顶层字段）或我们格式（instruct 包裹）
+      var ins = item.instruct && typeof item.instruct === 'object' ? item.instruct : item;
+      // 酒馆 sampling（顶层或 sampling 包裹）
+      var samp = item.sampling && typeof item.sampling === 'object' ? item.sampling : item;
+      var preset = {
+        name: name,
+        instruct: {
+          input_sequence: ins.input_sequence || '<|im_start|>user',
+          output_sequence: ins.output_sequence || '<|im_start|>assistant',
+          system_sequence: ins.system_sequence !== undefined ? ins.system_sequence : '<|im_start|>system',
+          stop_sequence: ins.stop_sequence !== undefined && ins.stop_sequence !== null ? ins.stop_sequence : '<|im_end|>',
+          wrap: ins.wrap !== undefined ? !!ins.wrap : true,
+          macro: ins.macro !== undefined ? !!ins.macro : true,
+          names_behavior: ins.names_behavior || 'force',
+        },
+        context: {
+          story_string: (item.context && item.context.story_string) || '{{system}}\n{{description}}\n{{chatHistory}}',
+          example_separator: (item.context && item.context.example_separator) || '***',
+          chat_start: (item.context && item.context.chat_start) || '***',
+        },
+        sampling: {
+          temperature: samp.temperature !== undefined ? samp.temperature : 0.9,
+          topP: samp.top_p !== undefined ? samp.top_p : (samp.topP !== undefined ? samp.topP : 0.95),
+          topK: samp.top_k !== undefined ? samp.top_k : (samp.topK !== undefined ? samp.topK : 40),
+          maxTokens: samp.max_tokens !== undefined ? samp.max_tokens : (samp.maxTokens !== undefined ? samp.maxTokens : 300),
+          frequencyPenalty: samp.frequency_penalty !== undefined ? samp.frequency_penalty : (samp.frequencyPenalty !== undefined ? samp.frequencyPenalty : 0),
+          presencePenalty: samp.presence_penalty !== undefined ? samp.presence_penalty : (samp.presencePenalty !== undefined ? samp.presencePenalty : 0),
+        },
+      };
+      imported.push(preset);
+    });
+    if (!imported.length) { toast('danger', 'i-alert', '未找到可导入的预设'); return; }
+    // 逐个保存
+    var chain = Promise.resolve();
+    imported.forEach(function (p) {
+      chain = chain.then(function () { return api.savePreset(p); });
+    });
+    chain.then(function () {
+      loadPresets();
+      toast('success', 'i-check', '已导入 ' + imported.length + ' 个预设');
+    }).catch(function (e) { toast('danger', 'i-alert', '导入失败: ' + e.message); });
+  }
+
   /* ==================== 群聊 ==================== */
   function loadGroups() {
     api.listGroups().then(function (data) {

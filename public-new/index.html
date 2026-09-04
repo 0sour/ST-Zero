@@ -238,7 +238,9 @@
           <div class="field"><label class="field-label">Stop</label><div class="code-box"><code id="instruct-stop">&lt;|im_end|&gt;</code></div></div>
           <div class="btn-row">
             <button class="btn primary" id="btn-save-preset" style="flex:1">保存预设</button>
+            <button class="btn" id="btn-import-preset" title="导入预设"><svg class="ic"><use href="#i-upload"/></svg></button>
             <button class="btn danger" id="btn-del-preset" title="删除预设"><svg class="ic"><use href="#i-trash"/></svg></button>
+            <input type="file" id="import-preset-json" accept=".json" hidden>
           </div>
         </div>
       </div>
