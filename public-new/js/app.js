@@ -1598,7 +1598,7 @@
 
   /* ==================== 聊天管理 ==================== */
   $('#btn-chat-manage').addEventListener('click', function () {
-    if (!state.currentChar) return;
+    if (!state.currentChar) { toast('danger', 'i-alert', '请先创建或选择一个角色'); return; }
     api.listChats(state.currentChar.id).then(function (data) {
       var chats = data.chats || [];
       var body = '<div class="field"><label class="field-label">新聊天标题</label><input id="new-chat-title" placeholder="聊天标题"></div>' +
@@ -1678,6 +1678,7 @@
   /* ==================== 聊天设置 ==================== */
   $('#btn-chat-settings').addEventListener('click', function () {
     if (!state.currentChat) { toast('danger', 'i-alert', '请先选择聊天'); return; }
+    if (state.groupMode) { toast('danger', 'i-alert', '群聊暂不支持聊天设置'); return; }
     api.getChatSettings(state.currentChat.id).then(function (data) {
       var s = data.settings || {};
       var body =
