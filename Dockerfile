@@ -5,7 +5,8 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+# dangerouslyAllowAllBuilds：pnpm 10 默认忽略 postinstall（esbuild 需运行构建脚本）
+RUN corepack enable && pnpm install --frozen-lockfile --config.dangerouslyAllowAllBuilds=true
 
 # ---------- 阶段 2：编译 ----------
 FROM node:22-alpine AS build
