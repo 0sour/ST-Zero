@@ -5,7 +5,7 @@
  */
 
 export interface BackendConfig {
-  type: 'openai' | 'text';
+  type: 'openai' | 'ollama' | 'text';
   baseUrl: string;
   model: string;
   apiKey: string;
@@ -58,7 +58,10 @@ export async function* generateChatCompletion(
   messages: Array<{ role: string; content: string }>,
   options: GenerateOptions,
 ): AsyncGenerator<string> {
-  const url = `${backend.baseUrl.replace(/\/$/, '')}/chat/completions`;
+  // Ollama Cloud 的 OpenAI 兼容端点在 /v1 下；用户填根地址时自动补
+  let base = backend.baseUrl.replace(/\/$/, '');
+  if (backend.type === 'ollama' && !/\/v\d+$/.test(base)) base += '/v1';
+  const url = `${base}/chat/completions`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
