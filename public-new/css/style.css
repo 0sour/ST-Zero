@@ -351,16 +351,22 @@ button { font-family: var(--font-body); }
 
 /* 响应式 */
 .mobile-menu-btn { display: none; }
+.mobile-panel-btn { display: none; }
 .mobile-overlay { position: fixed; inset: 0; z-index: 89; background: rgba(10, 9, 8, 0.6); opacity: 0; pointer-events: none; transition: opacity 0.3s var(--ease-out); }
 @media (max-width: 900px) {
   .mobile-menu-btn { display: flex; }
+  .mobile-panel-btn { display: flex; }
   .sidebar {
     position: fixed; z-index: 90; top: 0; bottom: 0; left: 0;
     transform: translateX(-100%); transition: transform 0.3s var(--ease-out); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   }
   .sidebar.open { transform: translateX(0); }
+  .right-panel {
+    position: fixed; z-index: 90; top: 0; bottom: 0; right: 0; width: 320px; max-width: 85vw;
+    transform: translateX(100%); transition: transform 0.3s var(--ease-out); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  }
+  .right-panel.open { transform: translateX(0); }
   .mobile-overlay.show { opacity: 1; pointer-events: auto; }
-  .right-panel { display: none; }
   .topbar { padding: 0 16px; }
   .topbar-search { position: static; transform: none; width: auto; flex: 1; }
   .chat-header { padding: 0 16px; }

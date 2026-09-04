@@ -1813,8 +1813,14 @@
     $('#main-sidebar').classList.toggle('open');
     $('#mobile-overlay').classList.toggle('show');
   });
+  // 移动端右侧栏抽屉
+  $('#btn-mobile-panel').addEventListener('click', function () {
+    $('#main-right-panel').classList.toggle('open');
+    $('#mobile-overlay').classList.toggle('show');
+  });
   $('#mobile-overlay').addEventListener('click', function () {
     $('#main-sidebar').classList.remove('open');
+    $('#main-right-panel').classList.remove('open');
     $('#mobile-overlay').classList.remove('show');
   });
   // 移动端选中角色后自动关闭抽屉
