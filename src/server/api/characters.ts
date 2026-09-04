@@ -172,7 +172,9 @@ charactersRouter.post('/import', upload.single('file'), (req, res) => {
     const fileName = `${sanitize(name)}-${Date.now()}.png`;
     const relPath = path.join('users', req.user!.id, 'characters', fileName);
     const absPath = path.join(config.dataDir, relPath);
-    const png = writeCharacterCardJson(req.file.buffer, card);
+    // JSON 导入无真实图片，用占位 PNG 作基底；PNG 导入则保留原图
+    const base = fileType === 'json' || fileType === 'yaml' || fileType === 'yml' ? createPlaceholderPng(card) : req.file.buffer;
+    const png = writeCharacterCardJson(base, card);
     fs.writeFileSync(absPath, png);
     const id = randomUUID();
     const now = Date.now();
