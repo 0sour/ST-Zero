@@ -1107,7 +1107,11 @@
     r.onload = function () {
       try {
         var data = JSON.parse(r.result);
-        api.createWorld(data.name || '导入世界书').then(function (res) {
+        // 世界书 JSON 通常无顶层 name（只有 entries），用文件名派生
+        if (!data.name) {
+          data.name = f.name.replace(/\.json$/i, '');
+        }
+        api.createWorld(data.name).then(function (res) {
           return api.updateWorld(res.id, data);
         }).then(function () {
           loadWorlds();

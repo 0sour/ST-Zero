@@ -66,8 +66,10 @@ worldsRouter.delete('/:id', (req, res) => {
 /** 导入世界书（JSON 文本） */
 worldsRouter.post('/import', (req, res) => {
   try {
-    const wi = parseWorldInfo(req.body);
-    const name = wi.name || '导入的世界书';
+    // 客户端可传 name（通常来自文件名）；世界书 JSON 内 name 优先
+    const body = req.body as Record<string, unknown>;
+    const wi = parseWorldInfo(body);
+    const name = wi.name || (typeof body.name === 'string' && body.name ? body.name : '导入的世界书');
     const id = randomUUID();
     const now = Date.now();
     const relPath = path.join('users', req.user!.id, 'worlds', `${id}.json`);
