@@ -263,6 +263,7 @@
     currentChat: null,
     messages: [],
     worlds: [],
+    selectedWorlds: [],
     regex: [],
     presets: [],
     activePreset: null,
@@ -927,12 +928,52 @@
       : '';
     var worldHtml = state.worlds.length
       ? state.worlds.map(function (w) {
-          return '<div class="wi-item" data-id="' + w.id + '"><div class="wi-k">' + esc(w.name) + '</div><div class="wi-c">' + esc(w.updated_at ? '更新于 ' + fmtTime(w.updated_at) : '') + '</div></div>';
+          var enabled = state.selectedWorlds.indexOf(w.id) >= 0;
+          return '<div class="wi-item" data-id="' + w.id + '" style="display:flex;align-items:center;gap:8px">' +
+            '<div style="flex:1;min-width:0"><div class="wi-k">' + esc(w.name) + '</div><div class="wi-c">' + esc(w.updated_at ? '更新于 ' + fmtTime(w.updated_at) : '') + '</div></div>' +
+            '<div class="' + (enabled ? 'rx-on' : 'rx-off') + '" data-toggle-world="' + w.id + '" title="' + (enabled ? '点击禁用' : '点击启用') + '" style="flex-shrink:0"></div>' +
+            '<button class="icon-btn" data-del-world="' + w.id + '" title="删除" style="flex-shrink:0"><svg class="ic"><use href="#i-trash"/></svg></button>' +
+          '</div>';
         }).join('')
       : '<div class="empty"><div class="empty-icon"><svg class="ic"><use href="#i-book"/></svg></div><div class="empty-title">暂无世界书</div><div class="empty-desc">创建第一个世界书</div></div>';
     list.innerHTML = embeddedHtml + worldHtml;
     $$('#world-list .wi-item[data-id]').forEach(function (el) {
-      el.addEventListener('click', function () { openWorldEditor(el.getAttribute('data-id')); });
+      el.addEventListener('click', function (e) {
+        if (e.target.closest('[data-toggle-world]') || e.target.closest('[data-del-world]')) return;
+        openWorldEditor(el.getAttribute('data-id'));
+      });
+    });
+    // 启用/禁用开关
+    $$('#world-list [data-toggle-world]').forEach(function (toggle) {
+      toggle.addEventListener('click', function () {
+        var wid = toggle.getAttribute('data-toggle-world');
+        var idx = state.selectedWorlds.indexOf(wid);
+        if (idx >= 0) state.selectedWorlds.splice(idx, 1);
+        else state.selectedWorlds.push(wid);
+        api.updateSettings({ selectedWorlds: state.selectedWorlds }).then(function () {
+          renderWorlds();
+          toast('success', 'i-check', idx >= 0 ? '已禁用（不参与生成）' : '已启用（参与生成）');
+        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+      });
+    });
+    // 删除
+    $$('#world-list [data-del-world]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var wid = b.getAttribute('data-del-world');
+        var w = state.worlds.find(function (x) { return x.id === wid; });
+        openModal('删除世界书',
+          '<p style="font-size:13px;color:var(--ink-2)">确定删除「' + esc(w ? w.name : '') + '」？此操作不可恢复。</p>',
+          '<button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="modal-ok-del-world">删除</button>');
+        $('#modal-ok-del-world').addEventListener('click', function () {
+          api.deleteWorld(wid).then(function () {
+            state.selectedWorlds = state.selectedWorlds.filter(function (x) { return x !== wid; });
+            api.updateSettings({ selectedWorlds: state.selectedWorlds });
+            closeModal();
+            loadWorlds();
+            toast('success', 'i-check', '已删除');
+          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+        });
+      });
     });
   }
 
@@ -1549,6 +1590,8 @@
   function loadSettings() {
     api.getSettings().then(function (data) {
       var s = data.settings || {};
+      state.selectedWorlds = Array.isArray(s.selectedWorlds) ? s.selectedWorlds : [];
+      renderWorlds();
       if (s.backend) {
         $('#backend-type .sel-value').textContent = s.backend.type || 'openai';
         $('#backend-url').value = s.backend.baseUrl || '';
