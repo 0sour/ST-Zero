@@ -23,14 +23,14 @@ describe('后端适配器', () => {
     return captured;
   }
 
-  it('ollama 类型：根地址自动补 /v1', async () => {
+  it('ollama 类型：根地址自动补 /v1（替换 /api）', async () => {
     const url = await captureUrl({ type: 'ollama', baseUrl: 'https://ollama.com/api', model: 'llama3.2', apiKey: '' });
-    expect(url).toBe('https://ollama.com/api/v1/chat/completions');
+    expect(url).toBe('https://ollama.com/v1/chat/completions');
   });
 
   it('ollama 类型：已带 /v1 不重复补', async () => {
-    const url = await captureUrl({ type: 'ollama', baseUrl: 'https://api.ollama.com/v1', model: 'llama3.2', apiKey: '' });
-    expect(url).toBe('https://api.ollama.com/v1/chat/completions');
+    const url = await captureUrl({ type: 'ollama', baseUrl: 'https://ollama.com/v1', model: 'llama3.2', apiKey: '' });
+    expect(url).toBe('https://ollama.com/v1/chat/completions');
   });
 
   it('openai 类型：不补 /v1，按用户填写的 baseUrl', async () => {
