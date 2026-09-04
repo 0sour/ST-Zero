@@ -40,8 +40,10 @@ async function* parseSse(body: ReadableStream<Uint8Array>): AsyncGenerator<strin
         if (data === '[DONE]') return;
         try {
           const json = JSON.parse(data);
-          const delta = json.choices?.[0]?.delta?.content ?? json.choices?.[0]?.text ?? '';
-          if (delta) yield delta;
+          // 兼容推理模型：content 常为空字符串（?? 无法回退），需用 || 回退到 reasoning
+          const delta = json.choices?.[0]?.delta ?? {};
+          const text = delta.content || delta.reasoning || (json.choices?.[0]?.text ?? '');
+          if (text) yield text;
         } catch {
           // 跳过无法解析的帧
         }

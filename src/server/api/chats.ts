@@ -270,8 +270,10 @@ chatsRouter.post('/:id/messages', async (req, res) => {
   const instruct = activePreset?.instruct ?? {};
   const context = activePreset?.context ?? {};
   const genMaxTokens = Number(sampling.maxTokens ?? 300);
+  // 推理模型（Ollama）会先输出大量 thinking（reasoning）帧，maxTokens 过小会导致正文被挤占
+  const effectiveMaxTokens = backend.type === 'ollama' ? Math.max(genMaxTokens, 1024) : genMaxTokens;
   const genOptions = {
-    maxTokens: genMaxTokens,
+    maxTokens: effectiveMaxTokens,
     temperature: sampling.temperature !== undefined ? Number(sampling.temperature) : undefined,
     topP: sampling.topP !== undefined ? Number(sampling.topP) : undefined,
     topK: sampling.topK !== undefined ? Number(sampling.topK) : undefined,
@@ -301,7 +303,7 @@ chatsRouter.post('/:id/messages', async (req, res) => {
       chat_start: (context.chat_start as string) ?? '***',
     },
     maxContext: 4096,
-    maxTokens: genMaxTokens,
+    maxTokens: effectiveMaxTokens,
     regexScripts,
     mode: 'chat',
   });
@@ -387,6 +389,7 @@ chatsRouter.post('/:id/swipe', async (req, res) => {
   };
   const persona = settings.persona ?? {};
   const personaText = [persona.name, persona.description].filter(Boolean).join('\n');
+  const backend = settings.backend ?? { type: 'openai', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5', apiKey: '' };
   const activePreset = settings.presets?.find((p) => p.name === settings.activePreset) as
     | { sampling?: Record<string, unknown>; instruct?: Record<string, unknown>; context?: Record<string, unknown> }
     | undefined;
@@ -397,8 +400,10 @@ chatsRouter.post('/:id/swipe', async (req, res) => {
   const scopedRegex = (data.extensions?.regex_scripts as RegexScript[] | undefined) ?? [];
   regexScripts.push(...scopedRegex);
   const genMaxTokens = Number(sampling.maxTokens ?? 300);
+  // 推理模型（Ollama）会先输出大量 thinking（reasoning）帧，maxTokens 过小会导致正文被挤占
+  const effectiveMaxTokens = backend.type === 'ollama' ? Math.max(genMaxTokens, 1024) : genMaxTokens;
   const genOptions = {
-    maxTokens: genMaxTokens,
+    maxTokens: effectiveMaxTokens,
     temperature: sampling.temperature !== undefined ? Number(sampling.temperature) : undefined,
     topP: sampling.topP !== undefined ? Number(sampling.topP) : undefined,
     topK: sampling.topK !== undefined ? Number(sampling.topK) : undefined,
@@ -426,11 +431,10 @@ chatsRouter.post('/:id/swipe', async (req, res) => {
       chat_start: (context.chat_start as string) ?? '***',
     },
     maxContext: 4096,
-    maxTokens: genMaxTokens,
+    maxTokens: effectiveMaxTokens,
     regexScripts,
     mode: 'chat',
   });
-  const backend = settings.backend ?? { type: 'openai', baseUrl: 'http://localhost:11434/v1', model: 'qwen2.5', apiKey: '' };
 
   // SSE 流式
   res.setHeader('Content-Type', 'text/event-stream');

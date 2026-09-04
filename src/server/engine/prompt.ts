@@ -159,16 +159,33 @@ function buildChatMessages(input: PromptBuildInput): ChatCompletionMessage[] {
     return { ...m, content: r.text };
   });
 
-  // 预算裁剪
+  // 预算裁剪：仅系统提示词与最后一条用户消息固定（模型必须看到用户输入才能回答），
+  // 其余（描述/世界书/历史）按优先级弹性分配，优先保留最近消息
+  let lastUserMsgIdx = -1;
+  for (let i = input.chat.length - 1; i >= 0; i--) {
+    if (input.chat[i].is_user) { lastUserMsgIdx = i; break; }
+  }
+  // processed 与 input.chat 的索引不一定对齐（processed 含 system 块），
+  // 通过内容定位最后用户消息对应的 processed 索引
+  let lastUserProcIdx = -1;
+  if (lastUserMsgIdx >= 0) {
+    const lastUserText = input.chat[lastUserMsgIdx].mes ?? '';
+    lastUserProcIdx = processed.findIndex((m) => m.content.includes(lastUserText) && !m.content.startsWith('system'));
+  }
   const blocks = processed.map((m, i) => ({
     id: `msg-${i}`,
     content: m.content,
-    fixed: i < 3, // 系统提示词与角色定义固定
+    fixed: i === 0 || i === lastUserProcIdx,
     priority: i,
   }));
   const budget = allocateBudget(blocks, input.maxContext - input.maxTokens);
   const keptIds = new Set(budget.blocks.map((b) => b.id));
+  // 若预算极端不足导致最后用户消息仍被裁（fixed 冲突时），强制追加
   const finalMessages = processed.filter((_, i) => keptIds.has(`msg-${i}`));
+  if (lastUserProcIdx >= 0 && !keptIds.has(`msg-${lastUserProcIdx}`)) {
+    finalMessages.push(processed[lastUserProcIdx]);
+    finalMessages.sort((a, b) => processed.indexOf(a) - processed.indexOf(b));
+  }
 
   return finalMessages;
 }
