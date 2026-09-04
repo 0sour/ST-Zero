@@ -119,3 +119,26 @@ describe('世界书扫描', () => {
     expect(estimateTokens('hello')).toBeGreaterThan(0);
   });
 });
+
+/** 预算裁剪：保留 order 小（优先级高）的条目，丢弃超预算的低优先级条目 */
+it('预算裁剪保留优先级高的条目', () => {
+  const entries: WorldInfoEntry[] = [
+    { uid: 1, key: ['甲'], content: 'A'.repeat(3000), order: 500 },  // 超预算且 order 大，应被丢弃
+    { uid: 2, key: ['乙'], content: 'B'.repeat(3000), order: 100 },  // 超预算但 order 小，应保留
+  ];
+  const result = scanWorldInfo({ entries, chatMessages: [{ name: 'u', is_user: true, mes: '甲乙' }], settings: DEFAULT_WI_SETTINGS, maxContext: 4096 });
+  const uids = result.activatedEntries.map((e) => e.uid);
+  expect(uids).toContain(2);
+  expect(uids).not.toContain(1);
+});
+
+/** 常驻条目始终注入，不受预算限制 */
+it('常驻条目豁免预算始终注入', () => {
+  const entries: WorldInfoEntry[] = [
+    { uid: 1, key: [], constant: true, content: 'C'.repeat(800), order: 100 },
+    { uid: 2, key: ['关键词'], content: 'D'.repeat(800), order: 100 },
+  ];
+  const result = scanWorldInfo({ entries, chatMessages: [{ name: 'u', is_user: true, mes: '关键词' }], settings: DEFAULT_WI_SETTINGS, maxContext: 4096 });
+  const uids = result.activatedEntries.map((e) => e.uid);
+  expect(uids).toContain(1);
+});

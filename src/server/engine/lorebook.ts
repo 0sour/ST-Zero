@@ -183,21 +183,22 @@ export function scanWorldInfo(input: WorldInfoScanInput): WorldInfoScanResult {
     }
   }
 
-  // 3. 预算裁剪（按 priority 从小到大丢弃；constant 常驻条目豁免预算，始终注入）
+  // 3. 预算裁剪（保留 order 小=优先级高的条目；constant 常驻条目豁免预算，始终注入）
   const budgetTokens = Math.floor((maxContext * settings.budget) / 100);
   // 常驻条目不占预算
   const constantOnes = activated.filter((e) => e.constant || e.ignoreBudget);
   const others = activated.filter((e) => !e.constant && !e.ignoreBudget);
   let total = others.reduce((sum, e) => sum + estimateTokens(e.content ?? ''), 0);
   if (total > budgetTokens) {
+    // 按 order 升序（优先级高在前），逐一保留直到预算满，超出的丢弃
     const sorted = [...others].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
     const kept: WorldInfoEntry[] = [];
+    let used = 0;
     for (const e of sorted) {
       const t = estimateTokens(e.content ?? '');
-      if (total <= budgetTokens) {
+      if (used + t <= budgetTokens || kept.length === 0) {
         kept.push(e);
-      } else {
-        total -= t;
+        used += t;
       }
     }
     activated.length = 0;
