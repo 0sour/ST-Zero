@@ -3,19 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ST-Zero 组件库 · 极简版</title>
+<title>ST-Zero 组件库 · 极简版（定稿）</title>
 <style>
 /* ============================================================
    ST-Zero 组件库 · 极简版（定稿）
+   与设计稿 doc/ui-mockups/风格7-极简暗黑.html 完全一致
    设计语言：幽灵按钮 + 极简线条 + 无框表单 + 灰阶层级 + 唯一一抹暗红
    ============================================================ */
 :root {
-  --bg-void: #1a1a1a;
-  --bg-deep: #202020;
-  --bg-panel: rgba(32, 32, 32, 0.8);
-  --ink-1: #e8e8e8;
+  /* 暗色主题（默认） */
+  --bg-void: #0a0a0a;
+  --bg-deep: #141414;
+  --bg-panel: rgba(20, 20, 20, 0.8);
+  --ink-1: #f0f0f0;
   --ink-2: #9a9a9a;
-  --ink-3: #6a6a6a;
+  --ink-3: #5a5a5a;
   --gold: #c0503a;
   --gold-bright: #d0604a;
   --gold-dim: rgba(192, 80, 58, 0.1);
@@ -23,10 +25,10 @@
   --vermilion: #c0503a;
   --vermilion-dim: rgba(192, 80, 58, 0.1);
   --washi-opacity: 0;
-  --particle-color: '192, 80, 58';
+  --particle-color: '224, 224, 224';
   --font-display: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
   --font-body: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-mono: 'JetBrains Mono', 'Consolas', monospace;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 [data-theme="light"] {
@@ -43,102 +45,337 @@
   --vermilion: #b03a2a;
   --vermilion-dim: rgba(176, 58, 42, 0.08);
   --washi-opacity: 0.35;
-  --particle-color: '176, 58, 42';
+  --particle-color: '160, 64, 48';
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { font-size: 14px; }
-body { font-family: var(--font-body); background: var(--bg-void); color: var(--ink-1); line-height: 1.6; transition: background 0.5s var(--ease-out), color 0.5s var(--ease-out); }
-.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.125em; flex-shrink: 0; }
+body { font-family: var(--font-body); background: var(--bg-void); color: var(--ink-1); overflow-x: hidden; -webkit-font-smoothing: antialiased; transition: background 0.5s var(--ease-out), color 0.5s var(--ease-out); }
+::selection { background: rgba(212, 169, 92, 0.3); }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--ink-3); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--gold-line); border-radius: 2px; }
+.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.125em; flex-shrink: 0; }
+/* 按钮统一继承正文字体（避免浏览器 UA 默认 Arial） */
+button { font-family: var(--font-body); }
 
-/* 组件库展示布局 */
-.demo-page { display: flex; min-height: 100vh; }
-.demo-sidebar { width: 220px; flex-shrink: 0; background: var(--bg-void); border-right: 1px solid #2a2a2a; padding: 20px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-.demo-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 4px; color: var(--ink-2); font-size: 13px; cursor: pointer; transition: all 0.3s var(--ease-out); }
-.demo-nav-item:hover { color: var(--ink-1); }
-.demo-nav-item.active { color: var(--ink-1); font-weight: 700; border-left: 2px solid var(--gold); background: var(--gold-dim); }
-.demo-main { flex: 1; padding: 24px 32px; min-width: 0; }
-.demo-section { margin-bottom: 40px; }
-.demo-block { background: var(--bg-deep); border: 1px solid #2a2a2a; border-radius: 4px; padding: 20px; margin-bottom: 12px; }
-.demo-block-title { font-size: 11px; color: var(--ink-3); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px; font-family: var(--font-mono); }
-.demo-grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-.theme-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 500; padding: 8px 16px; background: var(--bg-deep); border: 1px solid #666666; color: var(--ink-1); font-size: 12px; cursor: pointer; transition: all 0.3s var(--ease-out); }
-.theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
-
-.btn { height: 34px; padding: 0 18px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
-.btn.primary { background: transparent; border: 1px solid #888888; color: var(--ink-2); font-weight: 500; }
-.sb-btn { flex: 1; height: 36px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
-.sb-btn.primary { background: transparent; border: 1px dashed #666666; color: var(--ink-1); font-weight: 600; }
-.icon-btn { width: 30px; height: 30px; border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
-.field { margin-bottom: 28px; }
-.field-label { display: block; font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: #999999; margin-bottom: 6px; font-family: var(--font-body); }
-.field input { width: 100%; background: transparent; border: none; padding: 4px 0; color: var(--ink-1); font-size: 14px; outline: none; font-family: var(--font-body); transition: all 0.3s var(--ease-out); }
-.field textarea { resize: vertical; min-height: 50px; }
-.slider-row { display: flex; align-items: center; gap: 10px; }
-.slider-row input[type=range] { flex: 1; accent-color: var(--gold); }
-.slider-row input[type=number] { width: 60px; background: transparent; border: none; border-bottom: 1px solid #cccccc; padding: 4px 2px; color: var(--ink-1); font-size: 12px; font-family: var(--font-mono); }
-.rx-on { width: 34px; height: 18px; border-radius: 9px; background: var(--gold); position: relative; cursor: pointer; }
-.rx-off { width: 34px; height: 18px; border-radius: 9px; background: var(--ink-3); border: 1px solid #6a6a6a; position: relative; cursor: pointer; }
-.rx-item { display: flex; align-items: center; gap: 10px; padding: 16px 0; }
-.wi-item { padding: 12px 14px; border-left: 2px solid transparent; cursor: pointer; transition: all 0.3s var(--ease-out); }
-.msg { display: flex; gap: 14px; max-width: 85%; animation: msg-in 0.6s var(--ease-out); }
-.msg-bubble { border-left: 2px solid #8a3a2a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); padding: 4px 0 4px 16px; font-size: 14px; line-height: 1.8; color: #f5f5f5; font-family: var(--font-body); }
-.msg.user .msg-bubble { border-left: none; border-right: 2px solid #8a3a2a; padding: 4px 16px 4px 0; text-align: right; }
-.msg-meta { display: flex; align-items: center; gap: 14px; font-size: 9px; color: #bbbbbb; font-style: italic; margin-bottom: 10px; font-family: var(--font-body); }
-.msg-meta .m-name { color: var(--ink-1); font-family: var(--font-display); font-size: 14px; font-weight: 700; font-style: normal; }
-.msg-avatar { width: 24px; height: 24px; border: 1px solid #c0c0c0; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 10px; color: #888888; flex-shrink: 0; }
-.typing { display: inline-flex; gap: 5px; padding: 8px 0; }
-.swipe-btn { width: 26px; height: 26px; border: 1px solid var(--gold-line); border-radius: 50%; background: transparent; color: var(--gold); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
-.swipe-count { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); }
-.code-box { background: rgba(255, 255, 255, 0.04); border: 1px solid #2e2e2e; border-radius: 4px; padding: 10px 12px; }
-.code-box code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: #9ab8c8; }
-.preset-select { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #cccccc; cursor: pointer; font-size: 14px; color: var(--ink-1); }
-.modal { width: 440px; max-width: calc(100vw - 32px); background: var(--bg-panel); border: 1px solid var(--gold-line); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6); transform: translateY(16px) scale(0.98); transition: transform 0.4s var(--ease-out); }
-.modal-header { display: flex; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--gold-line); font-family: var(--font-display); font-size: 16px; font-weight: 600; }
-.modal-body { padding: 24px; max-height: 60vh; overflow-y: auto; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--gold-line); }
-.toast { display: flex; align-items: center; gap: 10px; min-width: 240px; padding: 14px 18px; background: var(--bg-panel); border: 1px solid var(--gold-line); border-left: 2px solid var(--gold); font-size: 13px; animation: toast-in 0.4s var(--ease-out); }
-.empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 20px; text-align: center; }
-.empty-title { font-family: var(--font-display); font-size: 24px; font-weight: 300; letter-spacing: 0.05em; color: var(--ink-2); }
-.empty-line { width: 40px; height: 1px; background: var(--gold); }
-.rp-tab { flex: 1; height: 44px; border: none; background: transparent; color: var(--ink-3); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; font-family: var(--font-body); }
-.rp-tab.active { color: var(--ink-1); background: transparent; font-weight: 700; }
-.char-item { display: flex; align-items: center; gap: 12px; padding: 12px 10px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.3s var(--ease-out); }
-.char-item.active { border-left: 2px solid #d0604a; background: var(--gold-dim); }
-.char-name { font-family: var(--font-display); font-size: 15px; font-weight: 500; letter-spacing: 0.02em; }
-.char-desc { font-size: 11px; color: var(--ink-2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.char-num { display: none; }
-.avatar { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--gold-line); color: var(--gold); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; cursor: pointer; transition: all 0.3s var(--ease-out); }
-.section-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: var(--ink-1); margin: 24px 0 12px; display: flex; align-items: center; gap: 12px; }
-.input-row { display: flex; align-items: center; gap: 12px; background: #2a2a2a; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); padding: 6px 8px 6px 20px; transition: all 0.3s var(--ease-out); }
-.send-btn { width: 40px; height: 36px; border: none; border-radius: 4px; background: transparent; color: #666666; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
-.it-btn { width: 24px; height: 24px; border: none; background: transparent; color: #c0c0c0; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
-[data-theme="light"] {
+/* ---------- 背景：和纸纹理 + 粒子 + 暗角（与设计稿一致） ---------- */
+.bg-washi { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: var(--washi-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.5'/%3E%3C/svg%3E"); }
+.bg-particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.bg-vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(10, 10, 10, 0.4) 100%); }
 [data-theme="light"] .bg-vignette { background: radial-gradient(ellipse at 50% 30%, transparent 40%, rgba(192, 80, 58, 0.05) 100%); }
 [data-theme="light"] .bg-washi { opacity: 0.35; }
+
+/* ---------- 组件库展示布局 ---------- */
+.demo-page { position: relative; z-index: 2; display: flex; min-height: 100vh; }
+.demo-sidebar { width: 220px; flex-shrink: 0; background: var(--bg-void); border-right: 1px solid #2a2a2a; padding: 20px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.demo-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-left: 2px solid transparent; color: var(--ink-2); font-size: 13px; cursor: pointer; transition: all 0.3s var(--ease-out); }
+.demo-nav-item:hover { color: var(--ink-1); }
+.demo-nav-item.active { color: var(--ink-1); font-weight: 700; border-left-color: var(--gold); background: var(--gold-dim); }
+.demo-main { flex: 1; padding: 24px 32px; min-width: 0; }
+.demo-section { margin-bottom: 40px; }
+.demo-block { background: var(--bg-deep); border: 1px solid #2a2a2a; padding: 20px; margin-bottom: 12px; }
+.demo-block-title { font-size: 11px; color: var(--ink-3); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px; font-family: var(--font-mono); }
+.demo-grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.theme-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 500; height: 34px; padding: 0 16px; background: transparent; border: 1px solid var(--gold-line); color: var(--ink-2); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ============================================================
+   以下组件样式与设计稿逐字一致
+   ============================================================ */
+
+/* ---------- 顶栏 ---------- */
+.topbar { height: 60px; display: flex; align-items: center; padding: 0 32px; gap: 24px; flex-shrink: 0; border-bottom: 1px solid #2a2a2a; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.logo-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); }
+.logo-seal { display: none; }
+.topbar-search { position: absolute; left: 50%; transform: translateX(-50%); width: 320px; }
+.topbar-search input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--gold-line); padding: 8px 0; color: var(--ink-1); font-size: 13px; outline: none; font-family: var(--font-body); transition: all 0.3s var(--ease-out); }
+.topbar-search input:focus { border-bottom-color: var(--gold); }
+.topbar-search input::placeholder { color: var(--ink-3); }
+.topbar-actions { margin-left: auto; display: flex; gap: 4px; }
+.tb-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 16px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.tb-btn:hover { color: var(--gold); }
+.tb-btn.active { color: var(--gold); }
+.avatar { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--gold-line); color: var(--gold); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; cursor: pointer; transition: all 0.3s var(--ease-out); }
+.avatar:hover { border-color: var(--gold); }
+
+/* ---------- 左侧栏 ---------- */
+.sidebar { width: 240px; background: var(--bg-void); border-right: 1px solid #2a2a2a; display: flex; flex-direction: column; min-height: 0; }
+.sidebar-label { padding: 20px 20px 8px; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-3); font-family: var(--font-mono); }
+.sidebar-header { padding: 8px 16px 16px; display: flex; gap: 8px; }
+.sb-btn { flex: 1; height: 36px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.sb-btn:hover { border-color: var(--gold); color: var(--gold); }
+.sb-btn.primary { background: transparent; border: 1px dashed #666666; color: var(--ink-1); font-weight: 600; }
+.sb-btn.primary:hover { background: var(--gold-bright); color: var(--bg-void); }
+.sidebar-tools { padding: 0 16px 16px; display: flex; gap: 8px; align-items: center; }
+.sidebar-tools input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--gold-line); padding: 6px 0; color: var(--ink-1); font-size: 12px; outline: none; }
+.sidebar-tools input:focus { border-bottom-color: var(--gold); }
+.char-list { flex: 1; overflow-y: auto; padding: 0 12px 16px; }
+.char-item { display: flex; align-items: center; gap: 12px; padding: 12px 10px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.3s var(--ease-out); }
+.char-item:hover { border-left-color: var(--gold-line); background: var(--gold-dim); }
+.char-item.active { border-left: 2px solid #d0604a; background: var(--gold-dim); }
 [data-theme="light"] .char-item.active { border-left: 2px solid var(--gold); background: #f0eeea; }
+.char-num { display: none; }
+.char-item:hover .char-num, .char-item.active .char-num { color: var(--gold); font-size: 14px; }
+.char-info { flex: 1; min-width: 0; }
+.char-name { font-family: var(--font-display); font-size: 15px; font-weight: 500; letter-spacing: 0.02em; }
+.char-item.active .char-name { color: #f0f0f0; font-weight: 700; }
 [data-theme="light"] .char-item.active .char-name { color: #222222; }
+.char-desc { font-size: 11px; color: var(--ink-2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.char-fav { color: var(--gold); font-size: 12px; display: flex; }
+
+/* ---------- 聊天区 ---------- */
+.chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-deep); }
 [data-theme="light"] .chat-area { background: var(--bg-deep); }
+.chat-header { height: 56px; display: flex; align-items: center; padding: 0 32px; gap: 12px; flex-shrink: 0; }
+.chat-header .ch-name { font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: 0.05em; }
+.chat-header .ch-sub { font-size: 11px; color: var(--ink-3); }
+.chat-header .spacer { flex: 1; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 24px 0; }
+.chat-inner { width: 100%; max-width: 720px; margin: 0 auto; padding: 40px 32px; display: flex; flex-direction: column; gap: 32px; }
+.msg { display: flex; gap: 14px; max-width: 85%; animation: msg-in 0.6s var(--ease-out); }
+.msg.user { align-self: flex-end; flex-direction: row-reverse; }
+@keyframes msg-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.msg-avatar { width: 24px; height: 24px; border: 1px solid #c0c0c0; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 10px; color: #888888; flex-shrink: 0; }
+.msg.user .msg-avatar { border-color: #d0d0d0; color: #b0b0b0; }
+.msg-body { min-width: 0; }
+.msg-meta { display: flex; align-items: center; gap: 14px; font-size: 9px; color: #bbbbbb; font-style: italic; margin-bottom: 10px; font-family: var(--font-body); }
+.msg-meta .m-name { color: var(--ink-1); font-family: var(--font-display); font-size: 14px; font-weight: 700; font-style: normal; }
+.msg-bubble { border-left: 2px solid #8a3a2a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); padding: 4px 0 4px 16px; font-size: 14px; line-height: 1.8; color: #f5f5f5; font-family: var(--font-body); }
 [data-theme="light"] .msg-bubble { border-left: 2px solid #b08070; background: transparent; padding: 2px 0 2px 20px; font-size: 15px; line-height: 1.8; color: #4a4a4a; }
+.msg.user .msg-bubble { border-left: none; border-right: 2px solid #8a3a2a; padding: 4px 16px 4px 0; text-align: right; }
 [data-theme="light"] .msg.user .msg-bubble { border-right: 2px solid #b08070; background: transparent; padding: 2px 20px 2px 0; font-size: 15px; line-height: 1.8; color: #4a4a4a; }
+.msg-actions { display: none; gap: 4px; margin-top: 6px; }
+.msg:hover .msg-actions { display: flex; }
+.msg-act { width: 24px; height: 24px; border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.msg-act:hover { color: var(--gold); }
+.swipe-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.swipe-btn { width: 26px; height: 26px; border: 1px solid var(--gold-line); border-radius: 50%; background: transparent; color: var(--gold); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.swipe-btn:hover { border-color: var(--gold); }
+.swipe-count { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); }
+.typing { display: inline-flex; gap: 5px; padding: 8px 0; }
+.typing span { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); animation: blink 1.2s infinite; }
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+/* ---------- 输入栏 ---------- */
+.chat-input { padding: 16px 0 24px; flex-shrink: 0; }
+.input-shell { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 24px; }
+.input-row { display: flex; align-items: center; gap: 12px; background: #2a2a2a; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); padding: 6px 8px 6px 20px; transition: all 0.3s var(--ease-out); }
 [data-theme="light"] .input-row { background: #f5f4f2; border: 1px solid #e5e2dc; border-radius: 2px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
 [data-theme="light"] .send-btn { background: transparent; color: #999999; }
 [data-theme="light"] .send-btn:hover { color: var(--ink-1); }
+.input-row:focus-within { border: 1px solid #666666; box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); }
+.input-row textarea { flex: 1; background: transparent; border: none; outline: none; color: var(--ink-1); font-size: 14px; resize: none; min-height: 36px; max-height: 100px; padding: 8px 0; font-family: var(--font-body); }
+.input-row textarea::placeholder { color: var(--ink-3); }
+.send-btn { width: 40px; height: 36px; border: none; border-radius: 4px; background: transparent; color: #666666; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.send-btn:hover { color: var(--ink-1); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.input-tools { display: flex; gap: 2px; margin-bottom: 6px; }
+.it-btn { width: 24px; height: 24px; border: none; background: transparent; color: #c0c0c0; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.it-btn:hover { color: var(--gold); }
+
+/* ---------- 右侧栏 ---------- */
+.right-panel { width: 280px; background: var(--bg-void); border-left: 1px solid #2a2a2a; display: flex; flex-direction: column; min-height: 0; }
+.rp-tabs { display: flex; border-bottom: 1px solid var(--gold-line); }
+.rp-tab { flex: 1; height: 44px; border: none; background: transparent; color: var(--ink-3); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; font-family: var(--font-body); }
+.rp-tab:hover { color: var(--ink-1); }
+.rp-tab.active { color: var(--ink-1); background: transparent; font-weight: 700; }
+.rp-body { flex: 1; overflow-y: auto; padding: 20px; }
+.rp-panel { display: none; }
+.rp-panel.active { display: block; animation: fade-in 0.4s var(--ease-out); }
+@keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.field { margin-bottom: 28px; }
+.field-label { display: block; font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: #999999; margin-bottom: 6px; font-family: var(--font-body); }
+.field input, .field textarea, .field select { width: 100%; background: transparent; border: none; padding: 4px 0; color: var(--ink-1); font-size: 14px; outline: none; font-family: var(--font-body); transition: all 0.3s var(--ease-out); }
+.field input:focus, .field textarea:focus { border-bottom: 1px solid #666666; }
+.field textarea { resize: vertical; min-height: 50px; }
+.code-box { background: rgba(255, 255, 255, 0.04); border: 1px solid #2e2e2e; border-radius: 4px; padding: 10px 12px; }
+.code-box code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: #9ab8c8; }
+.preset-select { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #cccccc; cursor: pointer; font-size: 14px; color: var(--ink-1); position: relative; }
+.preset-select > .ic { width: 14px; height: 14px; color: #999999; transition: transform 0.3s var(--ease-out); }
+.preset-select:hover { border-bottom-color: var(--gold); }
+.preset-select.open { border-bottom-color: var(--gold); }
+.preset-select.open > .ic { transform: rotate(180deg); }
+.preset-menu { position: absolute; top: calc(100% + 6px); left: 0; right: 0; min-width: 100%; background: var(--bg-deep); border: 1px solid #2a2a2a; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); padding: 6px; display: none; z-index: 100; }
+.preset-select.open .preset-menu { display: block; animation: fade-in 0.3s var(--ease-out); }
+.preset-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: none; background: transparent; color: var(--ink-2); font-size: 12.5px; cursor: pointer; text-align: left; transition: all 0.2s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.preset-item:hover { color: var(--gold); background: var(--gold-dim); }
+.preset-item.selected { color: var(--ink-1); font-weight: 600; }
+.preset-item.selected .ic { color: var(--gold); }
 [data-theme="light"] .preset-select { border-bottom-color: #d0d0d0; }
 [data-theme="light"] .code-box { background: #f0eeea; border-color: #e0ddd5; }
 [data-theme="light"] .code-box code { color: #4a4a4a; }
+.section-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: var(--ink-1); margin: 24px 0 12px; display: flex; align-items: center; gap: 12px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--gold-line); }
+.btn { height: 34px; padding: 0 18px; border: 1px solid var(--gold-line); background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.btn:hover { border-color: var(--gold); color: var(--gold); }
+.btn.primary { background: transparent; border: 1px solid #888888; color: var(--ink-2); font-weight: 500; }
+.btn.primary:hover { border-color: var(--ink-1); color: var(--ink-1); background: var(--gold-bright); }
+.btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.icon-btn { width: 30px; height: 30px; border: none; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.icon-btn:hover { color: var(--gold); }
+.check-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); padding: 4px 0; cursor: pointer; }
+.check-row input { accent-color: var(--gold); }
+.slider-row { display: flex; align-items: center; gap: 10px; }
+.slider-row input[type=range] { flex: 1; accent-color: var(--gold); }
 [data-theme="light"] .slider-row input[type=range] { accent-color: #333333; }
+.slider-row input[type=number] { width: 60px; background: transparent; border: none; border-bottom: 1px solid #cccccc; padding: 4px 2px; color: var(--ink-1); font-size: 12px; font-family: var(--font-mono); }
+.slider-row input[type=number]:hover { border-bottom-color: var(--gold); }
+.slider-row input[type=number]:focus { border-bottom-color: var(--gold); outline: none; }
 [data-theme="light"] .slider-row input[type=number] { border-bottom-color: #d0d0d0; }
+.wi-item { padding: 12px 14px; border-left: 2px solid transparent; cursor: pointer; transition: all 0.3s var(--ease-out); }
+.wi-item:hover { border-left-color: var(--gold); background: var(--gold-dim); }
 [data-theme="light"] .wi-item:hover { background: #f0eeea; }
-[data-theme="light"] .wi-item:hover { background: #f0eeea; }
+.wi-item .wi-k { font-family: var(--font-mono); font-size: 11px; color: var(--ink-1); }
+.wi-item .wi-c { font-size: 12px; color: #a6a6a6; margin-top: 4px; }
+.rx-item { display: flex; align-items: center; gap: 10px; padding: 16px 0; }
+.rx-item .rx-name { flex: 1; font-family: var(--font-display); font-size: 14px; font-weight: 600; }
+.rx-on { width: 34px; height: 18px; border-radius: 9px; background: var(--gold); position: relative; cursor: pointer; }
 [data-theme="light"] .rx-on { background: #222222; }
+.rx-on::after { content: ''; position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-void); }
 [data-theme="light"] .rx-on::after { background: #ffffff; }
+.rx-off { width: 34px; height: 18px; border-radius: 9px; background: var(--ink-3); border: 1px solid #6a6a6a; position: relative; cursor: pointer; }
+.rx-off::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-1); }
+
+/* ---------- 弹窗 ---------- */
+.modal-overlay { position: fixed; inset: 0; background: rgba(10, 9, 8, 0.7); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s var(--ease-out); }
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal { width: 440px; max-width: calc(100vw - 32px); background: var(--bg-panel); border: 1px solid var(--gold-line); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6); transform: translateY(16px) scale(0.98); transition: transform 0.4s var(--ease-out); }
+.modal-overlay.show .modal { transform: translateY(0) scale(1); }
+.modal-header { display: flex; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--gold-line); font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.modal-header .spacer { flex: 1; }
+.modal-body { padding: 24px; max-height: 60vh; overflow-y: auto; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--gold-line); }
+
+/* ---------- Toast ---------- */
+.toast-wrap { position: fixed; top: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast { display: flex; align-items: center; gap: 10px; min-width: 240px; padding: 14px 18px; background: var(--bg-panel); border: 1px solid var(--gold-line); border-left: 2px solid var(--gold); font-size: 13px; animation: toast-in 0.4s var(--ease-out); }
+.toast .ic { color: var(--gold); }
+@keyframes toast-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ---------- 空状态 ---------- */
+.empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 20px; text-align: center; }
+.empty-title { font-family: var(--font-display); font-size: 24px; font-weight: 300; letter-spacing: 0.05em; color: var(--ink-2); }
+.empty-line { width: 40px; height: 1px; background: var(--gold); }
+.empty-desc { font-size: 12px; color: var(--ink-3); }
+
+/* ============================================================
+   组件库补充组件（设计稿未展示，按极简版风格设计）
+   ============================================================ */
+.spacer { flex: 1; }
+.rx-body { flex: 1; min-width: 0; }
+.rx-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--ink-1); }
+.rx-desc { font-size: 11px; color: var(--ink-2); margin-top: 2px; }
+.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border: 1px solid var(--gold-line); color: var(--ink-2); font-size: 11px; letter-spacing: 0.1em; transition: all 0.3s var(--ease-out); }
+.tag:hover { border-color: var(--gold); color: var(--gold); }
+.badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--gold); color: var(--bg-void); font-family: var(--font-mono); font-size: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 22px; padding: 0 8px; border: 1px solid var(--ink-3); border-bottom-width: 2px; border-radius: 3px; background: var(--bg-deep); color: var(--ink-2); font-family: var(--font-mono); font-size: 11px; }
+.divider { height: 1px; background: #2a2a2a; border: none; margin: 16px 0; }
+.divider.labeled { display: flex; align-items: center; gap: 12px; color: var(--ink-3); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; font-family: var(--font-mono); }
+.divider.labeled::before, .divider.labeled::after { content: ''; flex: 1; height: 1px; background: #2a2a2a; }
+.progress { height: 2px; background: var(--gold-line); position: relative; overflow: hidden; }
+.progress > span { position: absolute; inset: 0; background: var(--gold); transform-origin: left; }
+.dropdown { position: relative; display: inline-flex; }
+.dropdown-menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px; background: var(--bg-deep); border: 1px solid #2a2a2a; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); padding: 6px; display: none; z-index: 100; }
+.dropdown.open .dropdown-menu { display: block; animation: fade-in 0.3s var(--ease-out); }
+.dropdown-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: none; background: transparent; color: var(--ink-2); font-size: 12.5px; cursor: pointer; text-align: left; transition: all 0.2s var(--ease-out); appearance: none; -webkit-appearance: none; }
+.dropdown-item:hover { color: var(--gold); background: var(--gold-dim); }
+.dropdown-sep { height: 1px; background: #2a2a2a; margin: 4px 0; }
+.tip { position: relative; }
+.tip::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--bg-deep); border: 1px solid #2a2a2a; color: var(--ink-2); font-size: 11px; padding: 4px 10px; white-space: nowrap; opacity: 0; pointer-events: none; transition: all 0.2s var(--ease-out); z-index: 200; }
+.tip:hover::after { opacity: 1; }
+
+/* ============================================================
+   补充组件（真实前端已使用，按极简版风格规定）
+   ============================================================ */
+
+/* ---------- 按钮变体 ---------- */
+.btn-primary { background: var(--gold); border-color: var(--gold); color: var(--bg-void); font-weight: 600; }
+.btn-primary:hover { background: var(--gold-bright); border-color: var(--gold-bright); color: var(--bg-void); }
+.btn.danger { color: var(--gold); border-color: var(--gold-line); }
+.btn.danger:hover { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--ink-2); }
+.btn-ghost:hover { background: var(--gold-dim); border-color: transparent; color: var(--gold); }
+.btn-sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.btn-lg { height: 40px; padding: 0 22px; font-size: 14px; }
+.btn-block { width: 100%; }
+
+/* ---------- 徽章 / 标签变体 ---------- */
+.badge-danger { background: var(--gold); color: var(--bg-void); }
+.badge-success { background: var(--ink-2); color: var(--bg-void); }
+.tag-accent { color: var(--gold); border-color: var(--gold-line); }
+.tag-accent:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ---------- 实心图标 ---------- */
+.ic-fill { fill: currentColor; stroke: none; }
+
+/* ---------- 角色头像（列表大图） ---------- */
+.char-avatar { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; border: 1px solid var(--gold-line); color: var(--gold); font-family: var(--font-display); overflow: hidden; }
+.char-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.char-meta { font-size: 10px; color: var(--ink-3); margin-top: 3px; display: flex; gap: 8px; align-items: center; }
+
+/* ---------- 列表容器 ---------- */
+.wi-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* ---------- 空状态图标 ---------- */
+.empty-icon { width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--gold-line); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 4px; }
+
+/* ---------- Toast 变体 ---------- */
+.toast-success { border-left-color: var(--ink-2); }
+.toast-success .ic { color: var(--ink-2); }
+.toast-danger { border-left-color: var(--gold); }
+.toast-danger .ic { color: var(--gold); }
+
+/* ---------- 排序菜单（侧栏工具行） ---------- */
+.sort-menu { position: relative; flex-shrink: 0; }
+.sort-trigger { width: 26px; height: 26px; font-size: 13px; }
+.sort-pop { position: absolute; top: calc(100% + 4px); right: 0; min-width: 110px; background: var(--bg-deep); border: 1px solid #2a2a2a; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); padding: 4px; z-index: 60; opacity: 0; transform: translateY(-4px); pointer-events: none; transition: all 0.15s var(--ease-out); }
+.sort-menu.open .sort-pop { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+/* ---------- 设置弹窗两栏 ---------- */
+.set-nav { width: 120px; flex-shrink: 0; border-right: 1px solid #2a2a2a; padding: 8px; overflow-y: auto; }
+.set-nav-item { padding: 8px 10px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; transition: all 0.3s var(--ease-out); margin-bottom: 2px; }
+.set-nav-item:hover { background: var(--gold-dim); color: var(--ink-1); }
+.set-nav-item.active { background: var(--gold-dim); color: var(--gold); border-left: 2px solid var(--gold); }
+.set-content { flex: 1; padding: 16px; overflow-y: auto; }
+.set-panel { display: none; }
+.set-panel.active { display: block; }
+
+/* ---------- 用户菜单 ---------- */
+.user-menu { position: fixed; top: 50px; right: 12px; z-index: 150; min-width: 180px; background: var(--bg-deep); border: 1px solid #2a2a2a; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); padding: 4px; display: none; }
+.user-menu.show { display: block; animation: scale-in 0.15s var(--ease-out); }
+@keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.um-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 13px; color: var(--ink-2); cursor: pointer; transition: all 0.3s var(--ease-out); }
+.um-item:hover { background: var(--gold-dim); color: var(--ink-1); }
+.um-item .ic { font-size: 14px; }
+.um-item.danger { color: var(--gold); }
+.um-item.danger:hover { background: var(--gold-dim); }
+.um-divider { height: 1px; background: #2a2a2a; margin: 4px 0; }
+.um-user { padding: 10px 12px; font-size: 12px; color: var(--ink-3); border-bottom: 1px solid #2a2a2a; margin-bottom: 4px; }
+.um-user strong { display: block; color: var(--ink-1); font-size: 13px; font-family: var(--font-display); }
+
+/* ---------- 登录页 ---------- */
+.login-page { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: var(--bg-void); }
+.login-card { width: 380px; background: var(--bg-deep); border: 1px solid var(--gold-line); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6); padding: 32px; }
+.login-logo { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 700; font-family: var(--font-display); letter-spacing: -0.01em; margin-bottom: 6px; }
+.login-logo .logo-badge { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--gold-line); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 14px; font-family: var(--font-display); }
+.login-sub { text-align: center; font-size: 12px; color: var(--ink-3); margin-bottom: 24px; }
+.login-error { background: var(--gold-dim); border: 1px solid var(--gold-line); color: var(--gold); padding: 8px 12px; font-size: 12.5px; margin-bottom: 14px; display: none; }
+.login-error.show { display: block; }
 </style>
 </head>
 <body>
 
+<!-- 背景层（与设计稿一致） -->
+<div class="bg-washi"></div>
+<canvas class="bg-particles" id="particles"></canvas>
+<div class="bg-vignette"></div>
+
+<!-- SVG 图标 sprite（Lucide 风格） -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
   <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
@@ -167,71 +404,267 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
   <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
   <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
   <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+  <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
 </svg>
 
 <div class="demo-page">
   <aside class="demo-sidebar">
-    <div style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:20px">ST-ZERO</div>
-    <div class="demo-nav-item active" data-nav="buttons">按钮</div>
+    <div class="logo" style="margin-bottom:20px"><span class="logo-seal">S0</span>ST-ZERO</div>
+    <div class="demo-nav-item active" data-nav="topbar">顶栏</div>
+    <div class="demo-nav-item" data-nav="buttons">按钮</div>
     <div class="demo-nav-item" data-nav="inputs">输入框</div>
+    <div class="demo-nav-item" data-nav="selects">下拉</div>
     <div class="demo-nav-item" data-nav="sliders">滑块</div>
     <div class="demo-nav-item" data-nav="toggles">开关</div>
+    <div class="demo-nav-item" data-nav="checks">复选框</div>
     <div class="demo-nav-item" data-nav="messages">消息</div>
     <div class="demo-nav-item" data-nav="cards">卡片</div>
     <div class="demo-nav-item" data-nav="code">代码块</div>
-    <div class="demo-nav-item" data-nav="modals">弹窗</div>
+    <div class="demo-nav-item" data-nav="tabs">标签页</div>
+    <div class="demo-nav-item" data-nav="menus">菜单</div>
+    <div class="demo-nav-item" data-nav="settings">设置</div>
+    <div class="demo-nav-item" data-nav="login">登录页</div>
+    <div class="demo-nav-item" data-nav="modals">弹窗 / Toast</div>
+    <div class="demo-nav-item" data-nav="empty">空状态</div>
     <div class="demo-nav-item" data-nav="misc">其他</div>
   </aside>
   <main class="demo-main">
 
-    <div class="demo-section" id="buttons">
+    <!-- ============ 顶栏 ============ -->
+    <div class="demo-section" id="topbar">
       <div class="demo-block">
-        <div class="demo-block-title">按钮</div>
+        <div class="demo-block-title">顶栏 · Topbar（衬线 Logo + 居中搜索 + 图标按钮组）</div>
+        <div class="topbar" style="position:relative">
+          <div class="logo"><span class="logo-seal">S0</span>ST-ZERO</div>
+          <div class="topbar-search"><input placeholder="搜索角色、世界书、正则…"></div>
+          <div class="topbar-actions">
+            <button class="tb-btn" title="切换亮暗主题"><svg class="ic"><use href="#i-moon"/></svg></button>
+            <button class="tb-btn active" title="设置"><svg class="ic"><use href="#i-settings"/></svg></button>
+            <div class="avatar">S</div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">Logo（衬线字标）</div>
         <div class="demo-grid">
-          <button class="btn">默认按钮</button>
-          <button class="btn primary">主要按钮</button>
-          <button class="btn" style="width:100%">占满宽度</button>
+          <div class="logo"><span class="logo-seal">S0</span>ST-ZERO</div>
+          <div class="logo" style="opacity:0.5">ST-ZERO</div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">顶栏按钮 · tb-btn（hover / active 变暗红）</div>
+        <div class="demo-grid">
+          <button class="tb-btn"><svg class="ic"><use href="#i-moon"/></svg></button>
+          <button class="tb-btn"><svg class="ic"><use href="#i-sun"/></svg></button>
+          <button class="tb-btn"><svg class="ic"><use href="#i-settings"/></svg></button>
+          <button class="tb-btn"><svg class="ic"><use href="#i-folder"/></svg></button>
+          <button class="tb-btn"><svg class="ic"><use href="#i-more"/></svg></button>
+          <button class="tb-btn active"><svg class="ic"><use href="#i-star"/></svg></button>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">头像 · avatar（圆环 + 衬线首字，hover 变暗红）</div>
+        <div class="demo-grid">
+          <div class="avatar">S</div>
+          <div class="avatar">千</div>
+          <div class="avatar">艾</div>
         </div>
       </div>
     </div>
 
-    <div class="demo-section" id="inputs">
+    <!-- ============ 按钮 ============ -->
+    <div class="demo-section" id="buttons">
       <div class="demo-block">
-        <div class="demo-block-title">输入框（无框表单）</div>
-        <div class="field"><label class="field-label">名称</label><input value="樱井千夏"></div>
-        <div class="field"><label class="field-label">描述</label><textarea>温柔的高中图书委员。</textarea></div>
+        <div class="demo-block-title">按钮 · btn（幽灵按钮：透明底 + 1px 灰边，hover 变暗红）</div>
+        <div class="demo-grid">
+          <button class="btn">默认按钮</button>
+          <button class="btn primary">主要按钮</button>
+          <button class="btn"><svg class="ic"><use href="#i-plus"/></svg> 带图标</button>
+          <button class="btn" disabled>禁用</button>
+        </div>
+        <div style="margin-top:12px"><button class="btn" style="width:100%">占满宽度</button></div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">侧栏按钮 · sb-btn（新建为虚线幽灵，导入为实线幽灵）</div>
+        <div class="demo-grid">
+          <button class="sb-btn primary" style="width:120px"><svg class="ic"><use href="#i-plus"/></svg> 新建</button>
+          <button class="sb-btn" style="width:120px"><svg class="ic"><use href="#i-upload"/></svg> 导入</button>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">图标按钮 · icon-btn（hover 变暗红）</div>
+        <div class="demo-grid">
+          <button class="icon-btn"><svg class="ic"><use href="#i-pencil"/></svg></button>
+          <button class="icon-btn"><svg class="ic"><use href="#i-copy"/></svg></button>
+          <button class="icon-btn"><svg class="ic"><use href="#i-trash"/></svg></button>
+          <button class="icon-btn"><svg class="ic"><use href="#i-download"/></svg></button>
+          <button class="icon-btn"><svg class="ic"><use href="#i-x"/></svg></button>
+          <button class="icon-btn"><svg class="ic"><use href="#i-sliders"/></svg></button>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">按钮行 · btn-row</div>
+        <div class="btn-row">
+          <button class="btn primary" style="flex:1">保存</button>
+          <button class="btn"><svg class="ic"><use href="#i-download"/></svg></button>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">按钮变体（实心 / 危险 / 幽灵 / 尺寸）</div>
+        <div class="demo-grid">
+          <button class="btn btn-primary">实心按钮</button>
+          <button class="btn danger">危险按钮</button>
+          <button class="btn btn-ghost">幽灵按钮</button>
+          <button class="btn btn-sm">小按钮</button>
+          <button class="btn btn-lg">大按钮</button>
+        </div>
+        <div style="margin-top:12px"><button class="btn btn-primary btn-block">占满宽度实心</button></div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">发送按钮 · send-btn（未输入灰 / 输入后亮 / 禁用）</div>
+        <div class="demo-grid">
+          <button class="send-btn"><svg class="ic"><use href="#i-send"/></svg></button>
+          <button class="send-btn" style="color:var(--ink-1);background:#3a3a3a"><svg class="ic"><use href="#i-send"/></svg></button>
+          <button class="send-btn" disabled><svg class="ic"><use href="#i-send"/></svg></button>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">输入工具按钮 · it-btn（hover 变暗红）</div>
+        <div class="demo-grid">
+          <button class="it-btn"><svg class="ic"><use href="#i-paperclip"/></svg></button>
+          <button class="it-btn"><svg class="ic"><use href="#i-image"/></svg></button>
+          <button class="it-btn"><svg class="ic"><use href="#i-mic"/></svg></button>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">Swipe 按钮 · swipe-btn（圆环 + 暗红，hover 加深）</div>
+        <div class="demo-grid">
+          <button class="swipe-btn"><svg class="ic"><use href="#i-chevron-left"/></svg></button>
+          <span class="swipe-count">1/3</span>
+          <button class="swipe-btn"><svg class="ic"><use href="#i-chevron-right"/></svg></button>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">消息操作按钮 · msg-act（hover 变暗红）</div>
+        <div class="demo-grid">
+          <button class="msg-act"><svg class="ic"><use href="#i-copy"/></svg></button>
+          <button class="msg-act"><svg class="ic"><use href="#i-trash"/></svg></button>
+          <button class="msg-act"><svg class="ic"><use href="#i-refresh"/></svg></button>
+        </div>
       </div>
     </div>
 
+    <!-- ============ 输入框 ============ -->
+    <div class="demo-section" id="inputs">
+      <div class="demo-block">
+        <div class="demo-block-title">无框表单 · field（透明底 + 下划线，focus 变灰）</div>
+        <div class="field"><label class="field-label">名称</label><input value="樱井千夏"></div>
+        <div class="field"><label class="field-label">描述</label><textarea>温柔的高中图书委员，喜欢推理小说。</textarea></div>
+        <div class="field"><label class="field-label">占位符</label><input placeholder="输入角色名称"></div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">搜索框（顶栏居中 / 侧栏工具行）</div>
+        <div class="topbar-search" style="position:static;transform:none;width:100%"><input placeholder="搜索角色、世界书、正则…"></div>
+        <div class="sidebar-tools" style="padding:16px 0 0"><input placeholder="搜索…"><button class="icon-btn"><svg class="ic"><use href="#i-sliders"/></svg></button></div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">输入栏 · input-row（纯底色 + 柔和阴影，focus-within 描边）</div>
+        <div class="input-shell" style="padding:0">
+          <div class="input-tools">
+            <button class="it-btn"><svg class="ic"><use href="#i-paperclip"/></svg></button>
+            <button class="it-btn"><svg class="ic"><use href="#i-image"/></svg></button>
+            <button class="it-btn"><svg class="ic"><use href="#i-mic"/></svg></button>
+          </div>
+          <div class="input-row">
+            <textarea placeholder="输入消息…（Enter 发送）"></textarea>
+            <button class="send-btn"><svg class="ic"><use href="#i-send"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 下拉 ============ -->
+    <div class="demo-section" id="selects">
+      <div class="demo-block">
+        <div class="demo-block-title">自研下拉 · preset-select（下划线 + 细箭头，点击展开菜单）</div>
+        <div class="field"><label class="field-label">预设</label>
+          <div class="preset-select" data-preset>
+            <span>ChatML · 默认</span><svg class="ic"><use href="#i-chevron-down"/></svg>
+            <div class="preset-menu">
+              <button class="preset-item selected" data-value="ChatML · 默认"><svg class="ic"><use href="#i-check"/></svg>ChatML · 默认</button>
+              <button class="preset-item" data-value="Claude · 默认"><svg class="ic"><use href="#i-check"/></svg>Claude · 默认</button>
+              <button class="preset-item" data-value="Llama 3 · 默认"><svg class="ic"><use href="#i-check"/></svg>Llama 3 · 默认</button>
+            </div>
+          </div>
+        </div>
+        <div class="field"><label class="field-label">模型</label>
+          <div class="preset-select" data-preset>
+            <span>gpt-4o-mini</span><svg class="ic"><use href="#i-chevron-down"/></svg>
+            <div class="preset-menu">
+              <button class="preset-item selected" data-value="gpt-4o-mini"><svg class="ic"><use href="#i-check"/></svg>gpt-4o-mini</button>
+              <button class="preset-item" data-value="gpt-4o"><svg class="ic"><use href="#i-check"/></svg>gpt-4o</button>
+              <button class="preset-item" data-value="claude-3-5-sonnet"><svg class="ic"><use href="#i-check"/></svg>claude-3-5-sonnet</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 滑块 ============ -->
     <div class="demo-section" id="sliders">
       <div class="demo-block">
-        <div class="demo-block-title">滑块</div>
+        <div class="demo-block-title">滑块 · slider-row（细轨道 + 数值框，hover/focus 变暗红）</div>
         <div class="field"><label class="field-label">Temperature</label>
           <div class="slider-row"><input type="range" min="0" max="2" step="0.01" value="0.9"><input type="number" value="0.9" step="0.01"></div>
         </div>
         <div class="field"><label class="field-label">Top P</label>
           <div class="slider-row"><input type="range" min="0" max="1" step="0.01" value="0.95"><input type="number" value="0.95" step="0.01"></div>
         </div>
+        <div class="field"><label class="field-label">Max Tokens</label>
+          <div class="slider-row"><input type="range" min="0" max="4096" step="1" value="1024"><input type="number" value="1024" step="1"></div>
+        </div>
       </div>
     </div>
 
+    <!-- ============ 开关 ============ -->
     <div class="demo-section" id="toggles">
       <div class="demo-block">
-        <div class="demo-block-title">开关</div>
+        <div class="demo-block-title">开关 · rx（胶囊轨道 + 圆环拨钮，点击切换）</div>
         <div class="rx-item"><div class="rx-body"><div class="rx-name">清理多余空行</div><div class="rx-desc">自动去除对话中的空白行</div></div><div class="rx-on"></div></div>
         <div class="rx-item"><div class="rx-body"><div class="rx-name">角色名加粗</div><div class="rx-desc">让角色名在回复中保持粗体</div></div><div class="rx-on"></div></div>
         <div class="rx-item"><div class="rx-body"><div class="rx-name">去除星号动作</div><div class="rx-desc">移除 *动作* 格式的描写</div></div><div class="rx-off"></div></div>
       </div>
     </div>
 
+    <!-- ============ 复选框 ============ -->
+    <div class="demo-section" id="checks">
+      <div class="demo-block">
+        <div class="demo-block-title">复选框 · check-row（accent-color 暗红）</div>
+        <label class="check-row"><input type="checkbox" checked> 自动滚动到最新消息</label>
+        <label class="check-row"><input type="checkbox"> 显示 token 计数</label>
+        <label class="check-row"><input type="checkbox" checked> 启用世界书</label>
+      </div>
+    </div>
+
+    <!-- ============ 消息 ============ -->
     <div class="demo-section" id="messages">
       <div class="demo-block">
-        <div class="demo-block-title">消息（引线排版）</div>
+        <div class="demo-block-title">消息 · msg（引线排版：AI 靠左暗红引线 / 用户靠右，hover 显示操作）</div>
         <div class="msg">
           <div class="msg-avatar">樱</div>
           <div class="msg-body">
             <div class="msg-meta"><span class="m-name">樱井千夏</span><span>22:49</span></div>
             <div class="msg-bubble">嗯！那就说定了。明天下午三点，老位置见。</div>
+            <div class="msg-actions">
+              <button class="msg-act"><svg class="ic"><use href="#i-copy"/></svg></button>
+              <button class="msg-act"><svg class="ic"><use href="#i-trash"/></svg></button>
+            </div>
+            <div class="swipe-row">
+              <button class="swipe-btn"><svg class="ic"><use href="#i-chevron-left"/></svg></button>
+              <span class="swipe-count">1/3</span>
+              <button class="swipe-btn"><svg class="ic"><use href="#i-chevron-right"/></svg></button>
+            </div>
           </div>
         </div>
         <div class="msg user">
@@ -242,42 +675,269 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
           </div>
         </div>
       </div>
+      <div class="demo-block">
+        <div class="demo-block-title">输入中 · typing（暗红三点呼吸）</div>
+        <div class="msg">
+          <div class="msg-avatar">樱</div>
+          <div class="msg-body"><div class="typing"><span></span><span></span><span></span></div></div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">消息头像 · msg-avatar（菱形线框 + 衬线首字）</div>
+        <div class="demo-grid">
+          <div class="msg-avatar">樱</div>
+          <div class="msg-avatar">艾</div>
+          <div class="msg-avatar">N</div>
+        </div>
+      </div>
     </div>
 
+    <!-- ============ 卡片 ============ -->
     <div class="demo-section" id="cards">
       <div class="demo-block">
-        <div class="demo-block-title">世界书卡片</div>
+        <div class="demo-block-title">角色列表项 · char-item（选中态 = 暗红指示线 + 背景块）</div>
+        <div class="char-item active">
+          <div class="char-num">01</div>
+          <div class="char-info"><div class="char-name">樱井千夏</div><div class="char-desc">温柔的高中图书委员</div></div>
+          <div class="char-fav"><svg class="ic"><use href="#i-star"/></svg></div>
+        </div>
+        <div class="char-item">
+          <div class="char-num">02</div>
+          <div class="char-info"><div class="char-name">艾尔文·灰烬</div><div class="char-desc">流亡的骑士团长</div></div>
+        </div>
+        <div class="char-item">
+          <div class="char-num">03</div>
+          <div class="char-info"><div class="char-name">NOVA-7</div><div class="char-desc">空间站 AI 助手</div></div>
+          <div class="char-fav"><svg class="ic"><use href="#i-star"/></svg></div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">世界书条目 · wi-item（hover 暗红引线 + 背景）</div>
         <div class="wi-item"><div class="wi-k">图书馆, 书架, 借书</div><div class="wi-c">放学后的图书馆是千夏的秘密基地。</div></div>
         <div class="wi-item"><div class="wi-k">雾之馆, 杀人事件</div><div class="wi-c">千夏最近在读的小说。</div></div>
       </div>
     </div>
 
+    <!-- ============ 代码块 ============ -->
     <div class="demo-section" id="code">
       <div class="demo-block">
-        <div class="demo-block-title">代码块</div>
+        <div class="demo-block-title">代码块 · code-box（等宽字体 + 极浅底色）</div>
         <div class="field"><label class="field-label">Input</label><div class="code-box"><code>&lt;|im_start|&gt;user</code></div></div>
         <div class="field"><label class="field-label">Output</label><div class="code-box"><code>&lt;|im_start|&gt;assistant</code></div></div>
+        <div class="field"><label class="field-label">多行</label><div class="code-box"><code>{"temperature": 0.9,<br>"top_p": 0.95}</code></div></div>
       </div>
     </div>
 
-    <div class="demo-section" id="modals">
+    <!-- ============ 标签页 ============ -->
+    <div class="demo-section" id="tabs">
       <div class="demo-block">
-        <div class="demo-block-title">弹窗 / Toast</div>
-        <div class="demo-grid">
-          <button class="btn" id="btn-modal">打开弹窗</button>
-          <button class="btn" id="btn-toast">显示 Toast</button>
+        <div class="demo-block-title">右侧标签页 · rp-tab（active 加粗变亮）</div>
+        <div class="rp-tabs">
+          <div class="rp-tab active">CHAR</div>
+          <div class="rp-tab">WORLD</div>
+          <div class="rp-tab">REGEX</div>
+          <div class="rp-tab">PRESET</div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">章节标题 · section-title（衬线 + 暗红细线延伸）</div>
+        <div class="section-title">采样参数</div>
+        <div class="section-title">指令模板</div>
+      </div>
+    </div>
+
+    <!-- ============ 菜单 ============ -->
+    <div class="demo-section" id="menus">
+      <div class="demo-block">
+        <div class="demo-block-title">排序菜单 · sort-menu（侧栏工具行，点击展开）</div>
+        <div class="sidebar-tools" style="padding:0">
+          <input placeholder="搜索…">
+          <div class="sort-menu" id="demo-sort">
+            <button class="icon-btn sort-trigger"><svg class="ic"><use href="#i-sliders"/></svg></button>
+            <div class="sort-pop">
+              <button class="dropdown-item selected">默认排序</button>
+              <button class="dropdown-item">最近使用</button>
+              <button class="dropdown-item">按名称</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">用户菜单 · user-menu（头像点击弹出）</div>
+        <div class="user-menu show" style="position:static;display:block;margin-bottom:8px">
+          <div class="um-user"><strong>default-user</strong>普通用户</div>
+          <div class="um-item"><svg class="ic"><use href="#i-settings"/></svg>设置</div>
+          <div class="um-item"><svg class="ic"><use href="#i-users"/></svg>用户管理</div>
+          <div class="um-divider"></div>
+          <div class="um-item danger"><svg class="ic"><use href="#i-logout"/></svg>退出登录</div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">下拉菜单 · dropdown（幽灵按钮 + 弹出菜单）</div>
+        <div class="dropdown" id="demo-dropdown">
+          <button class="btn" id="btn-dropdown"><svg class="ic"><use href="#i-more"/></svg> 更多</button>
+          <div class="dropdown-menu">
+            <button class="dropdown-item"><svg class="ic"><use href="#i-pencil"/></svg> 编辑</button>
+            <button class="dropdown-item"><svg class="ic"><use href="#i-copy"/></svg> 复制</button>
+            <div class="dropdown-sep"></div>
+            <button class="dropdown-item"><svg class="ic"><use href="#i-trash"/></svg> 删除</button>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- ============ 设置 ============ -->
+    <div class="demo-section" id="settings">
+      <div class="demo-block">
+        <div class="demo-block-title">设置弹窗两栏 · set-nav（左侧标签页 + 右侧内容）</div>
+        <div style="display:flex;border:1px solid #2a2a2a;background:var(--bg-deep);min-height:220px">
+          <div class="set-nav">
+            <div class="set-nav-item active">后端连接</div>
+            <div class="set-nav-item">Persona</div>
+          </div>
+          <div class="set-content">
+            <div class="field"><label class="field-label">API 地址</label><input value="http://localhost:8000"></div>
+            <div class="field"><label class="field-label">API Key</label><input placeholder="sk-…"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 登录页 ============ -->
+    <div class="demo-section" id="login">
+      <div class="demo-block">
+        <div class="demo-block-title">登录页 · login（居中卡片 + 衬线 Logo）</div>
+        <div class="login-page" style="position:static;z-index:0;padding:24px;background:transparent">
+          <div class="login-card" style="width:100%;max-width:380px">
+            <div class="login-logo"><div class="logo-badge">S0</div>ST-Zero</div>
+            <div class="login-sub">从零开始的 AI 角色扮演</div>
+            <div class="field"><label class="field-label">用户名</label><input placeholder="请输入用户名"></div>
+            <div class="field"><label class="field-label">密码</label><input type="password" placeholder="请输入密码"></div>
+            <div class="login-error show">用户名或密码错误</div>
+            <button class="btn btn-primary btn-block btn-lg">登 录</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗 / Toast ============ -->
+    <div class="demo-section" id="modals">
+      <div class="demo-block">
+        <div class="demo-block-title">弹窗 · modal（无框纯背景 + 柔和阴影）/ Toast（右上角滑入）</div>
+        <div class="demo-grid">
+          <button class="btn" id="btn-modal">打开弹窗</button>
+          <button class="btn" id="btn-toast">显示 Toast</button>
+        </div>
+        <div class="toast-wrap" style="position:static;margin-top:16px">
+          <div class="toast"><svg class="ic"><use href="#i-check"/></svg><span>操作成功</span></div>
+          <div class="toast toast-success"><svg class="ic"><use href="#i-check"/></svg><span>已保存</span></div>
+          <div class="toast toast-danger"><svg class="ic"><use href="#i-x"/></svg><span>保存失败</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 空状态 ============ -->
+    <div class="demo-section" id="empty">
+      <div class="demo-block">
+        <div class="demo-block-title">空状态 · empty（衬线大标题 + 暗红细线）</div>
+        <div class="empty">
+          <div class="empty-title">开始一段新的对话</div>
+          <div class="empty-line"></div>
+          <div class="empty-desc">发送第一条消息开始</div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">空状态带图标 · empty-icon（圆环线框 + 暗红图标）</div>
+        <div class="empty">
+          <div class="empty-icon"><svg class="ic"><use href="#i-message"/></svg></div>
+          <div class="empty-title">暂无角色</div>
+          <div class="empty-desc">点击"新建"创建第一个角色</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 其他 ============ -->
     <div class="demo-section" id="misc">
       <div class="demo-block">
-        <div class="demo-block-title">其他</div>
+        <div class="demo-block-title">侧栏标签 · sidebar-label（等宽小字 + 大字距）</div>
+        <div class="sidebar-label">Characters</div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">标签 · tag（幽灵线框，hover 变暗红 / tag-accent 暗红强调）</div>
         <div class="demo-grid">
           <span class="tag">日常</span>
+          <span class="tag">推理</span>
+          <span class="tag tag-accent">admin</span>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">徽章 · badge（暗红圆点 + 等宽数字 / 变体）</div>
+        <div class="demo-grid">
           <span class="badge">3</span>
+          <span class="badge">12</span>
+          <span class="badge badge-danger">!</span>
+          <span class="badge badge-success">✓</span>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">实心图标 · ic-fill（收藏星标等填充态）</div>
+        <div class="demo-grid">
+          <span style="color:var(--gold);font-size:16px;display:flex"><svg class="ic ic-fill"><use href="#i-star"/></svg></span>
+          <span style="color:var(--ink-2);font-size:16px;display:flex"><svg class="ic"><use href="#i-star"/></svg></span>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">角色头像 · char-avatar（列表大图，圆环 + 衬线首字）</div>
+        <div class="demo-grid">
+          <div class="char-avatar">樱</div>
+          <div class="char-avatar">艾</div>
+          <div class="char-avatar">N</div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">列表容器 · wi-list（世界书 / 正则列表）</div>
+        <div class="wi-list">
+          <div class="wi-item"><div class="wi-k">图书馆, 书架, 借书</div><div class="wi-c">放学后的图书馆是千夏的秘密基地。</div></div>
+          <div class="wi-item"><div class="wi-k">雾之馆, 杀人事件</div><div class="wi-c">千夏最近在读的小说。</div></div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">快捷键 · kbd（等宽 + 立体下边）</div>
+        <div class="demo-grid">
           <kbd class="kbd">Enter</kbd>
-          <div class="avatar">S</div>
+          <kbd class="kbd">Shift</kbd>
+          <kbd class="kbd">Ctrl</kbd>
+          <kbd class="kbd">K</kbd>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">分割线 · divider（细线 / 带文字）</div>
+        <div class="divider"></div>
+        <div class="divider labeled">分隔</div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">进度条 · progress（2px 细轨道 + 暗红填充）</div>
+        <div class="progress" style="margin-bottom:8px"><span style="transform:scaleX(0.3)"></span></div>
+        <div class="progress" style="margin-bottom:8px"><span style="transform:scaleX(0.6)"></span></div>
+        <div class="progress"><span style="transform:scaleX(0.9)"></span></div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">下拉菜单 · dropdown（幽灵按钮 + 弹出菜单）</div>
+        <div class="dropdown" id="demo-dropdown">
+          <button class="btn" id="btn-dropdown"><svg class="ic"><use href="#i-more"/></svg> 更多</button>
+          <div class="dropdown-menu">
+            <button class="dropdown-item"><svg class="ic"><use href="#i-pencil"/></svg> 编辑</button>
+            <button class="dropdown-item"><svg class="ic"><use href="#i-copy"/></svg> 复制</button>
+            <div class="dropdown-sep"></div>
+            <button class="dropdown-item"><svg class="ic"><use href="#i-trash"/></svg> 删除</button>
+          </div>
+        </div>
+      </div>
+      <div class="demo-block">
+        <div class="demo-block-title">工具提示 · tooltip（hover 显示）</div>
+        <div class="demo-grid">
+          <button class="btn tip" data-tip="切换亮暗主题"><svg class="ic"><use href="#i-moon"/></svg></button>
+          <button class="btn tip" data-tip="打开设置"><svg class="ic"><use href="#i-settings"/></svg></button>
         </div>
       </div>
     </div>
@@ -289,7 +949,10 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
     <div class="modal-header"><span>新建角色</span><div class="spacer"></div><button class="icon-btn" id="modal-close"><svg class="ic"><use href="#i-x"/></svg></button></div>
-    <div class="modal-body"><div class="field"><label class="field-label">名称</label><input placeholder="输入角色名称"></div></div>
+    <div class="modal-body">
+      <div class="field"><label class="field-label">名称</label><input placeholder="输入角色名称"></div>
+      <div class="field"><label class="field-label">描述</label><textarea placeholder="角色简介…"></textarea></div>
+    </div>
     <div class="modal-footer"><button class="btn" id="modal-cancel">取消</button><button class="btn primary">创建</button></div>
   </div>
 </div>
@@ -302,16 +965,49 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
 <script>
 (function () {
   var $ = function (s) { return document.querySelector(s); };
-  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var $$ = function (s, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(s)); };
 
-  /* 主题切换 */
+  /* ============ 粒子背景（与设计稿一致） ============ */
+  var canvas = $('#particles');
+  var ctx = canvas.getContext('2d');
+  var particles = [];
+  function getColor() {
+    return document.documentElement.getAttribute('data-theme') === 'light' ? '140, 59, 46' : '212, 169, 92';
+  }
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  function initParticles() {
+    particles = [];
+    for (var i = 0; i < 40; i++) {
+      particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, r: Math.random() * 1.5 + 0.3, vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15, o: Math.random() * 0.5 + 0.1 });
+    }
+  }
+  initParticles();
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var color = getColor();
+    particles.forEach(function (p) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + color + ', ' + p.o + ')';
+      ctx.fill();
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  /* ============ 主题切换 ============ */
   $('#theme-toggle').addEventListener('click', function () {
     var isLight = document.documentElement.getAttribute('data-theme') === 'light';
     if (isLight) document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', 'light');
   });
 
-  /* 导航 */
+  /* ============ 导航 ============ */
   $$('.demo-nav-item').forEach(function (item) {
     item.addEventListener('click', function () {
       $$('.demo-nav-item').forEach(function (i) { i.classList.remove('active'); });
@@ -321,13 +1017,13 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
     });
   });
 
-  /* 弹窗 */
+  /* ============ 弹窗 ============ */
   $('#btn-modal').addEventListener('click', function () { $('#modal-overlay').classList.add('show'); });
   $('#modal-close').addEventListener('click', function () { $('#modal-overlay').classList.remove('show'); });
   $('#modal-cancel').addEventListener('click', function () { $('#modal-overlay').classList.remove('show'); });
   $('#modal-overlay').addEventListener('click', function (e) { if (e.target === $('#modal-overlay')) $('#modal-overlay').classList.remove('show'); });
 
-  /* Toast */
+  /* ============ Toast ============ */
   $('#btn-toast').addEventListener('click', function () {
     var t = document.createElement('div');
     t.className = 'toast';
@@ -336,12 +1032,52 @@ body { font-family: var(--font-body); background: var(--bg-void); color: var(--i
     setTimeout(function () { t.style.transition = 'all 0.3s ease'; t.style.opacity = '0'; t.style.transform = 'translateX(20px)'; setTimeout(function () { t.remove(); }, 300); }, 2500);
   });
 
-  /* 开关切换 */
+  /* ============ 开关切换 ============ */
   $$('.rx-on, .rx-off').forEach(function (el) {
     el.addEventListener('click', function () {
       el.classList.toggle('rx-on');
       el.classList.toggle('rx-off');
     });
+  });
+
+  /* ============ 下拉菜单 ============ */
+  $('#btn-dropdown').addEventListener('click', function (e) {
+    e.stopPropagation();
+    $('#demo-dropdown').classList.toggle('open');
+  });
+  document.addEventListener('click', function () { $('#demo-dropdown').classList.remove('open'); });
+
+  /* ============ 排序菜单 ============ */
+  $('#demo-sort .sort-trigger').addEventListener('click', function (e) {
+    e.stopPropagation();
+    $('#demo-sort').classList.toggle('open');
+  });
+  $$('#demo-sort .dropdown-item').forEach(function (item) {
+    item.addEventListener('click', function () {
+      $$('#demo-sort .dropdown-item').forEach(function (i) { i.classList.remove('selected'); });
+      item.classList.add('selected');
+      $('#demo-sort').classList.remove('open');
+    });
+  });
+  document.addEventListener('click', function () { $('#demo-sort').classList.remove('open'); });
+
+  /* ============ 自研下拉 · preset-select ============ */
+  $$('.preset-select[data-preset]').forEach(function (sel) {
+    sel.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var item = e.target.closest('.preset-item');
+      if (item) {
+        $$('.preset-item', sel).forEach(function (i) { i.classList.remove('selected'); });
+        item.classList.add('selected');
+        sel.querySelector('span').textContent = item.getAttribute('data-value');
+        sel.classList.remove('open');
+        return;
+      }
+      sel.classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', function () {
+    $$('.preset-select[data-preset]').forEach(function (s) { s.classList.remove('open'); });
   });
 })();
 </script>

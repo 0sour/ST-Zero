@@ -15,6 +15,7 @@ import { regexRouter } from './api/regex.js';
 import { presetsRouter } from './api/presets.js';
 import { quickRepliesRouter } from './api/quick-replies.js';
 import { groupsRouter } from './api/groups.js';
+import { serveUserFile } from './files.js';
 
 /** 种子：单用户模式内置默认管理员；多用户模式首个用户自动 admin */
 function seed() {
@@ -48,14 +49,11 @@ export function createApp() {
   // 健康检查
   app.get('/health', (_req, res) => res.json({ ok: true }));
 
-  // 静态文件服务（前端 + 用户文件）
-  app.use(express.static(path.join(process.cwd(), 'public')));
-  app.use('/files', express.static(path.join(config.dataDir), {
-    fallthrough: false,
-    setHeaders: (res) => {
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-    },
-  }));
+  // 静态文件服务（前端）
+  app.use(express.static(path.join(process.cwd(), 'public-new')));
+
+  // 用户文件服务（JWT 鉴权 + 用户目录隔离）
+  app.use('/files', serveUserFile);
 
   // API 路由
   app.use('/api/auth', authRouter);

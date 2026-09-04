@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { getDb } from '../db.js';
+import { config } from '../config.js';
 import { requireAdmin, requireAuth } from '../auth/middleware.js';
 import { hashPassword, toSafeUser, User } from '../auth/passwords.js';
 
@@ -63,13 +66,36 @@ adminRouter.patch('/users/:id', (req, res) => {
   return res.json({ user: toSafeUser(updated) });
 });
 
-/** 删除用户（可选清除数据） */
+/** 删除用户（清除关联数据 + 文件目录，避免外键约束失败） */
 adminRouter.delete('/users/:id', (req, res) => {
   const db = getDb();
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as unknown as User | undefined;
   if (!user) return res.status(404).json({ error: 'User not found' });
   if (user.id === req.user!.id) return res.status(400).json({ error: 'Cannot delete yourself' });
-  db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
+  const uid = req.params.id;
+  // 关联数据（chats 先于 characters，groups 引用 characters）
+  const chats = db.prepare('SELECT file_path FROM chats WHERE user_id = ?').all(uid) as Array<{ file_path: string }>;
+  for (const c of chats) fs.rmSync(path.join(config.dataDir, c.file_path), { force: true });
+  const characters = db.prepare('SELECT avatar_path FROM characters WHERE user_id = ?').all(uid) as Array<{ avatar_path: string }>;
+  for (const c of characters) fs.rmSync(path.join(config.dataDir, c.avatar_path), { force: true });
+  const worlds = db.prepare('SELECT file_path FROM worlds WHERE user_id = ?').all(uid) as Array<{ file_path: string }>;
+  for (const w of worlds) fs.rmSync(path.join(config.dataDir, w.file_path), { force: true });
+  // 群聊：从成员的 member_ids 中移除该用户
+  const groups = db.prepare('SELECT id, member_ids FROM groups').all() as Array<{ id: string; member_ids: string }>;
+  const updateGroup = db.prepare('UPDATE groups SET member_ids = ? WHERE id = ?');
+  for (const g of groups) {
+    const members = (JSON.parse(g.member_ids) as string[]).filter((m) => m !== uid);
+    if (members.length !== JSON.parse(g.member_ids).length) updateGroup.run(JSON.stringify(members), g.id);
+  }
+  // 若该用户还出现在他人群聊成员中（跨用户），一并移除（上面的循环已覆盖全部群）
+  db.prepare('DELETE FROM groups WHERE user_id = ?').run(uid);
+  db.prepare('DELETE FROM chats WHERE user_id = ?').run(uid);
+  db.prepare('DELETE FROM characters WHERE user_id = ?').run(uid);
+  db.prepare('DELETE FROM worlds WHERE user_id = ?').run(uid);
+  db.prepare('DELETE FROM settings WHERE user_id = ?').run(uid);
+  db.prepare('DELETE FROM users WHERE id = ?').run(uid);
+  // 文件目录
+  fs.rmSync(path.join(config.dataDir, 'users', uid), { recursive: true, force: true });
   return res.json({ ok: true });
 });
 

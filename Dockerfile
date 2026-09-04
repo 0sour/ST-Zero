@@ -25,8 +25,8 @@ ENV DATA_DIR=/app/data
 COPY --from=deps /app/node_modules ./node_modules
 # 编译产物
 COPY --from=build /app/dist ./dist
-# 前端静态文件
-COPY public ./public
+# 前端静态文件（极简版新前端）
+COPY public-new ./public-new
 # package.json（用于启动脚本）
 COPY package.json ./
 

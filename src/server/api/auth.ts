@@ -7,6 +7,16 @@ import { loginLimiter, requireAuth } from '../auth/middleware.js';
 
 export const authRouter = Router();
 
+/** 种 httpOnly 会话 cookie（供 /files 等非 API 资源鉴权） */
+function setSessionCookie(res: import('express').Response, token: string) {
+  res.cookie('stzero_token', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+  });
+}
+
 /** 登录 */
 authRouter.post('/login', async (req, res) => {
   try {
@@ -28,6 +38,7 @@ authRouter.post('/login', async (req, res) => {
       return res.status(403).json({ error: 'User is disabled' });
     }
     const token = signToken(user);
+    setSessionCookie(res, token);
     return res.json({ token, user: toSafeUser(user) });
   } catch (e) {
     console.error('[auth] Login failed:', e);
@@ -61,10 +72,18 @@ authRouter.post('/register', (req, res) => {
     'INSERT INTO users (id, username, password_hash, role, enabled, display_name, created_at, updated_at, ver) VALUES (?, ?, ?, ?, 1, ?, ?, ?, 0)',
   ).run(id, username, hashPassword(password), role, display_name || username, now, now);
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as unknown as User;
-  return res.status(201).json({ token: signToken(user), user: toSafeUser(user) });
+  const token = signToken(user);
+  setSessionCookie(res, token);
+  return res.status(201).json({ token, user: toSafeUser(user) });
 });
 
 /** 当前用户信息 */
 authRouter.get('/me', requireAuth, (req, res) => {
   return res.json({ user: toSafeUser(req.user!) });
+});
+
+/** 退出登录（清除会话 cookie） */
+authRouter.post('/logout', (_req, res) => {
+  res.clearCookie('stzero_token');
+  return res.json({ ok: true });
 });

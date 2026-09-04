@@ -54,7 +54,8 @@ describe('宏替换', () => {
   });
 
   it('嵌套宏先内后外', () => {
-    expect(substituteParams('{{random:{{char}},X}}', ctx)).toBe('樱井千夏');
+    const result = substituteParams('{{random:{{char}},X}}', ctx);
+    expect(['樱井千夏', 'X']).toContain(result);
   });
 
   it('自定义宏', () => {

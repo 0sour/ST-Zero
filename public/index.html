@@ -32,6 +32,7 @@
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
   --font: 'Georgia', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', serif;
+  --font-display: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
   --font-ui: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --mono: 'JetBrains Mono', 'Consolas', monospace;
   --bg-1-rgb: 28, 25, 23;
@@ -40,10 +41,6 @@
   --panel-alpha: 0.85;
   --ctrl-alpha: 0.75;
   --hl-alpha: 0.65;
-  --bg-image-default: #141210;
-  --mask-rgb: 20, 16, 12;
-  --mask-alpha: 0.55;
-  --bg-blur: 0px;
 }
 [data-theme="light"] {
   --bg-0: #f5f1ea;
@@ -80,14 +77,13 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 .ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.125em; flex-shrink: 0; }
 .ic-fill { fill: currentColor; stroke: none; }
 
-/* 背景 */
-.bg-layer { position: fixed; inset: 0; z-index: 0; background-image: var(--bg-image, var(--bg-image-default)); background-size: cover; background-position: center; filter: blur(var(--bg-blur)); }
-.bg-mask { position: fixed; inset: 0; z-index: 1; background: rgba(var(--mask-rgb), var(--mask-alpha)); }
+/* 背景层（纯色底，无自定义背景功能） */
+.bg-layer { position: fixed; inset: 0; z-index: 0; background: var(--bg-0); }
 .page { position: relative; z-index: 2; height: 100vh; display: flex; flex-direction: column; }
 
 /* 顶栏 */
 .topbar { position: relative; height: 50px; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: rgba(var(--bg-1-rgb), var(--panel-alpha)); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.logo { display: flex; align-items: center; gap: 10px; font-family: var(--font); font-weight: 700; font-size: 16px; letter-spacing: 1px; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
 .logo-badge { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11px; }
 .topbar-search { position: absolute; left: 50%; transform: translateX(-50%); width: 320px; max-width: 40vw; }
 .topbar-search .ic { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 13px; }
@@ -280,19 +276,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 .rx-off { width: 36px; height: 20px; border-radius: 10px; background: var(--bg-3); position: relative; cursor: pointer; }
 .rx-off::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-3); }
 
-/* 背景控制 */
-.bg-presets { display: flex; gap: 6px; }
-.bg-preset { width: 40px; height: 28px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; background-size: cover; background-position: center; transition: all var(--transition); appearance: none; -webkit-appearance: none; line-height: 28px; }
-.bg-preset:hover { border-color: var(--accent); }
-.bg-preset[data-bg="0"] { background: var(--bg-2); }
-.bg-preset[data-bg="1"] { background: linear-gradient(135deg,#1a1a2e,#16213e,#0f3460); }
-.bg-preset[data-bg="2"] { background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); }
-.bg-preset[data-bg="3"] { background: radial-gradient(ellipse at 20% 20%,#2d1b69,#1a1a2e 60%,#0f0f1a); }
-.theme-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
-.theme-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; transition: all var(--transition); appearance: none; -webkit-appearance: none; line-height: 26px; }
-.theme-swatch:hover { border-color: var(--accent); }
-.theme-swatch.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-
 /* 弹窗 / Toast / 用户菜单 */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
 .modal-overlay.show { opacity: 1; pointer-events: auto; }
@@ -335,7 +318,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 /* 登录页 */
 .login-page { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: var(--bg-0); }
 .login-card { width: 380px; background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 32px; }
-.login-logo { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 700; font-family: var(--font); margin-bottom: 6px; }
+.login-logo { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 700; font-family: var(--font-display); letter-spacing: -0.01em; margin-bottom: 6px; }
 .login-logo .logo-badge { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 14px; }
 .login-sub { text-align: center; font-size: 12px; color: var(--text-3); margin-bottom: 24px; }
 .login-error { background: var(--danger-soft); border: 1px solid rgba(224, 122, 95, 0.3); color: var(--danger); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12.5px; margin-bottom: 14px; display: none; }
@@ -391,7 +374,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
 
 <!-- 背景层 -->
 <div class="bg-layer"></div>
-<div class="bg-mask"></div>
 
 <!-- 登录页 -->
 <div class="login-page" id="login-page">
@@ -645,10 +627,7 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
     <div class="modal-body" style="display:flex;padding:0;height:560px">
       <div class="set-nav">
 <div class="set-nav-item active" data-set-tab="0">后端连接</div>
-<div class="set-nav-item" data-set-tab="1">背景</div>
-<div class="set-nav-item" data-set-tab="2">Persona</div>
-<div class="set-nav-item" data-set-tab="3">主题色</div>
-<div class="set-nav-item" data-set-tab="4">遮罩</div>
+<div class="set-nav-item" data-set-tab="1">Persona</div>
       </div>
       <div class="set-content">
 <div class="set-panel active" data-set-panel="0">          <div class="section-title">后端连接</div>
@@ -682,19 +661,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
           </div>
 </div>
 <div class="set-panel" data-set-panel="1">
-          <div class="section-title">背景</div>
-          <div class="bg-presets">
-            <button class="bg-preset" data-bg="0" title="默认"></button>
-            <button class="bg-preset" data-bg="1" title="暮色"></button>
-            <button class="bg-preset" data-bg="2" title="极光"></button>
-            <button class="bg-preset" data-bg="3" title="霓虹"></button>
-          </div>
-          <div class="btn-row">
-            <button class="btn" id="bg-upload">上传背景图</button>
-            <button class="btn" id="bg-clear">清除</button>
-            <input type="file" id="bg-file" accept="image/*" hidden>
-          </div></div>
-<div class="set-panel" data-set-panel="2">
           <div class="section-title">Persona</div>
           <div class="field">
             <label class="field-label">角色名</label>
@@ -707,39 +673,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
           <div class="btn-row">
             <button class="btn primary" id="btn-save-persona">保存 Persona</button>
           </div></div>
-<div class="set-panel" data-set-panel="3">
-          <div class="section-title">主题色</div>
-          <div class="theme-swatches">
-            <button class="theme-swatch active" data-theme="0" title="深棕" style="background:#14100c"></button>
-            <button class="theme-swatch" data-theme="1" title="暖褐" style="background:#23190f"></button>
-            <button class="theme-swatch" data-theme="2" title="暗绿" style="background:#0c1610"></button>
-            <button class="theme-swatch" data-theme="3" title="暗红" style="background:#1e0c0a"></button>
-          </div></div>
-<div class="set-panel" data-set-panel="4">
-          <div class="section-title">遮罩</div>
-          <div class="field">
-            <label class="field-label">模糊</label>
-            <div class="slider-row">
-              <input type="range" id="mask-blur" min="0" max="30" step="1" value="0">
-              <input type="number" id="mask-blur-num" min="0" max="30" step="1" value="0" style="width:60px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text-1);font-size:12px">
-            </div>
-          </div>
-          <div class="field">
-            <label class="field-label">透明度</label>
-            <div class="slider-row">
-              <input type="range" id="mask-opacity" min="0" max="100" step="1" value="55">
-              <input type="number" id="mask-opacity-num" min="0" max="100" step="1" value="55" style="width:60px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text-1);font-size:12px">
-            </div>
-          </div>
-          <div class="field">
-            <label class="field-label">面板不透明度</label>
-            <div class="slider-row">
-              <input type="range" id="panel-opacity" min="0" max="100" step="1" value="85">
-              <input type="number" id="panel-opacity-num" min="0" max="100" step="1" value="85" style="width:60px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;color:var(--text-1);font-size:12px">
-            </div>
-          </div>
-        
-</div>
       </div>
     </div>
   </div>
@@ -1452,43 +1385,6 @@ body { font-family: var(--font-ui); background: var(--bg-0); color: var(--text-1
   });
   document.addEventListener('click', function (e) { if (!sortMenu.contains(e.target)) sortMenu.classList.remove('open'); });
   $('#char-search').addEventListener('input', renderChars);
-
-  /* ============ 背景系统 ============ */
-  var presets = ['', 'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)', 'linear-gradient(135deg,#0f2027,#203a43,#2c5364)', 'radial-gradient(ellipse at 20% 20%,#2d1b69,#1a1a2e 60%,#0f0f1a)'];
-  var themes = [['深棕', '20,16,12'], ['暖褐', '35,25,15'], ['暗绿', '12,22,16'], ['暗红', '30,12,10']];
-  var body = document.body;
-  function applyBg(v) { body.style.setProperty('--bg-image', v); }
-  function applyTheme(i) {
-    body.style.setProperty('--mask-rgb', themes[i][1]);
-    $$('.theme-swatch').forEach(function (s, j) { s.classList.toggle('active', j === i); });
-  }
-  function applyBlur(v) { body.style.setProperty('--bg-blur', v + 'px'); }
-  function applyOpacity(v) { body.style.setProperty('--mask-alpha', (v / 100).toFixed(2)); }
-  function applyPanelOpacity(v) {
-    var p = v / 100;
-    body.style.setProperty('--panel-alpha', p.toFixed(2));
-    body.style.setProperty('--ctrl-alpha', (p * 0.88).toFixed(2));
-    body.style.setProperty('--hl-alpha', (p * 0.76).toFixed(2));
-  }
-  $$('.bg-preset').forEach(function (b, i) { b.addEventListener('click', function () { applyBg(presets[i]); }); });
-  var file = $('#bg-file');
-  $('#bg-upload').addEventListener('click', function () { file.click(); });
-  file.addEventListener('change', function () {
-    var f = file.files[0]; if (!f) return;
-    var r = new FileReader();
-    r.onload = function () { applyBg('url(' + r.result + ')'); };
-    r.readAsDataURL(f);
-  });
-  $('#bg-clear').addEventListener('click', function () { applyBg(''); });
-  $$('.theme-swatch').forEach(function (s, i) { s.addEventListener('click', function () { applyTheme(i); }); });
-  function linkSlider(rangeId, numId, fn) {
-    var r = $(rangeId), n = $(numId);
-    r.addEventListener('input', function () { n.value = r.value; fn(r.value); });
-    n.addEventListener('input', function () { r.value = n.value; fn(n.value); });
-  }
-  linkSlider('#mask-blur', '#mask-blur-num', applyBlur);
-  linkSlider('#mask-opacity', '#mask-opacity-num', applyOpacity);
-  linkSlider('#panel-opacity', '#panel-opacity-num', applyPanelOpacity);
 
   /* ============ 主题切换 ============ */
   $('#theme-toggle').addEventListener('click', function () {
