@@ -38,7 +38,7 @@ adminRouter.post('/users', (req, res) => {
   return res.status(201).json({ user: toSafeUser(user) });
 });
 
-/** 更新用户（角色/启用禁用） */
+/** 更新用户（用户名/角色/启用禁用/显示名/密码） */
 adminRouter.patch('/users/:id', (req, res) => {
   const db = getDb();
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as unknown as User | undefined;
@@ -46,14 +46,25 @@ adminRouter.patch('/users/:id', (req, res) => {
   if (user.id === req.user!.id && (req.body.role !== undefined || req.body.enabled === false)) {
     return res.status(400).json({ error: 'Cannot change your own role or disable yourself' });
   }
-  const { role, enabled, display_name, password } = req.body as {
+  const { role, enabled, display_name, password, username } = req.body as {
     role?: 'user' | 'admin';
     enabled?: boolean;
     display_name?: string;
     password?: string;
+    username?: string;
   };
   const sets: string[] = [];
   const params: Array<string | number> = [];
+  if (username !== undefined) {
+    const trimmed = username.trim();
+    if (trimmed.length < 3) return res.status(400).json({ error: 'Username must be ≥3 chars' });
+    if (trimmed !== user.username) {
+      const existing = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(trimmed, req.params.id);
+      if (existing) return res.status(409).json({ error: 'Username already exists' });
+      sets.push('username = ?'); params.push(trimmed);
+      sets.push('ver = ver + 1'); // 用户名变更使旧 token 失效
+    }
+  }
   if (role !== undefined) { sets.push('role = ?'); params.push(role); sets.push('ver = ver + 1'); }
   if (enabled !== undefined) { sets.push('enabled = ?'); params.push(enabled ? 1 : 0); }
   if (display_name !== undefined) { sets.push('display_name = ?'); params.push(display_name); }

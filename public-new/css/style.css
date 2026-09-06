@@ -372,4 +372,15 @@ button { font-family: var(--font-body); }
   .chat-header { padding: 0 16px; }
   .chat-inner { padding: 24px 16px; }
   .input-shell { padding: 0 12px; }
+  /* 弹窗窄屏适配：全宽 + 设置两栏纵排 + 下拉菜单不溢出 */
+  .modal { width: calc(100vw - 24px); max-height: calc(100vh - 40px); }
+  .modal-lg { width: calc(100vw - 24px); }
+  .modal-body { padding: 16px; max-height: 70vh; }
+  .modal-header { padding: 14px 16px; }
+  .modal-footer { padding: 12px 16px; }
+  .modal[style*="display:flex"] .modal-body, .modal-body[style*="display:flex"] { flex-direction: column; height: auto !important; }
+  .set-nav { width: 100%; border-right: none; border-bottom: 1px solid var(--line); display: flex; overflow-x: auto; padding: 6px; }
+  .set-nav-item { white-space: nowrap; flex-shrink: 0; margin-bottom: 0; }
+  .set-content { padding: 12px; }
+  .dropdown-menu, .preset-menu, .qr-menu, .sort-pop { max-width: calc(100vw - 32px); }
 }

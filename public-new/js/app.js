@@ -446,104 +446,134 @@
     }).catch(function (e) { toast('danger', 'i-alert', e.message); });
   }
 
+  /** 单条消息 HTML（供全量/增量渲染共用） */
+  function buildMessageHtml(m, i) {
+    var isUser = !!m.is_user;
+    var name = m.name || (isUser ? '你' : (state.currentChar ? state.currentChar.name : ''));
+    var html = '<div class="msg' + (isUser ? ' user' : '') + '" data-idx="' + i + '">' +
+      '<div class="msg-avatar">' + esc((name || '?')[0]) + '</div>' +
+      '<div class="msg-body">' +
+        '<div class="msg-meta"><span class="m-name">' + esc(name) + '</span><span>' + fmtTime(m.send_date) + '</span></div>' +
+        '<div class="msg-bubble">' + renderMd(m.mes) + '</div>';
+    if (!isUser && m.swipes && m.swipes.length > 1) {
+      html += '<div class="swipe-row">' +
+        '<button class="swipe-btn" data-swipe="-1"><svg class="ic"><use href="#i-chevron-left"/></svg></button>' +
+        '<span class="swipe-count">' + ((m.swipe_id || 0) + 1) + '/' + m.swipes.length + '</span>' +
+        '<button class="swipe-btn" data-swipe="1"><svg class="ic"><use href="#i-chevron-right"/></svg></button>' +
+      '</div>';
+    }
+    html += '<div class="msg-actions">' +
+      (!isUser ? '<button class="msg-act" data-act="regenerate"><svg class="ic"><use href="#i-refresh"/></svg></button>' : '') +
+      '<button class="msg-act" data-act="copy"><svg class="ic"><use href="#i-copy"/></svg></button>' +
+      '<button class="msg-act" data-act="edit"><svg class="ic"><use href="#i-pencil"/></svg></button>' +
+      '<button class="msg-act" data-act="del"><svg class="ic"><use href="#i-trash"/></svg></button>' +
+    '</div></div></div>';
+    return html;
+  }
+
+  /** 追加单条消息 DOM（增量渲染，避免长对话全量重绘） */
+  function appendMessage(m) {
+    var box = $('#chat-inner');
+    var idx = state.messages.indexOf(m);
+    if (idx < 0) return;
+    var wrap = document.createElement('div');
+    wrap.innerHTML = buildMessageHtml(m, idx);
+    var node = wrap.firstChild;
+    box.appendChild(node);
+    return node;
+  }
+
+  var RENDER_WINDOW = 100; // 长对话默认只渲染最近 100 条
   function renderMessages() {
     var box = $('#chat-inner');
     if (!state.messages.length) { renderEmptyChat(); return; }
-    box.innerHTML = state.messages.map(function (m, i) {
-      var isUser = !!m.is_user;
-      var name = m.name || (isUser ? '你' : (state.currentChar ? state.currentChar.name : ''));
-      var html = '<div class="msg' + (isUser ? ' user' : '') + '" data-idx="' + i + '">' +
-        '<div class="msg-avatar">' + esc((name || '?')[0]) + '</div>' +
-        '<div class="msg-body">' +
-          '<div class="msg-meta"><span class="m-name">' + esc(name) + '</span><span>' + fmtTime(m.send_date) + '</span></div>' +
-          '<div class="msg-bubble">' + renderMd(m.mes) + '</div>';
-      if (!isUser && m.swipes && m.swipes.length > 1) {
-        html += '<div class="swipe-row">' +
-          '<button class="swipe-btn" data-swipe="-1"><svg class="ic"><use href="#i-chevron-left"/></svg></button>' +
-          '<span class="swipe-count">' + ((m.swipe_id || 0) + 1) + '/' + m.swipes.length + '</span>' +
-          '<button class="swipe-btn" data-swipe="1"><svg class="ic"><use href="#i-chevron-right"/></svg></button>' +
-        '</div>';
-      }
-      html += '<div class="msg-actions">' +
-        (!isUser ? '<button class="msg-act" data-act="regenerate"><svg class="ic"><use href="#i-refresh"/></svg></button>' : '') +
-        '<button class="msg-act" data-act="copy"><svg class="ic"><use href="#i-copy"/></svg></button>' +
-        '<button class="msg-act" data-act="edit"><svg class="ic"><use href="#i-pencil"/></svg></button>' +
-        '<button class="msg-act" data-act="del"><svg class="ic"><use href="#i-trash"/></svg></button>' +
-      '</div></div></div>';
-      return html;
-    }).join('');
+    var total = state.messages.length;
+    var start = Math.max(0, total - RENDER_WINDOW);
+    var html = '';
+    if (start > 0) {
+      html += '<div class="load-older" style="text-align:center;padding:8px 0"><button class="btn btn-sm" id="btn-load-older">加载更早消息（' + start + ' 条）</button></div>';
+    }
+    for (var i = start; i < total; i++) {
+      html += buildMessageHtml(state.messages[i], i);
+    }
+    box.innerHTML = html;
     box.scrollIntoView({ block: 'end' });
-    bindMsgActions();
   }
 
-  function bindMsgActions() {
-    $$('#chat-inner .swipe-btn').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var idx = parseInt(b.closest('.msg').getAttribute('data-idx'));
-        var m = state.messages[idx];
-        var dir = parseInt(b.getAttribute('data-swipe'));
-        if (dir > 0 && state.currentChat && (!m.swipes || m.swipe_id >= m.swipes.length - 1) && !state.isGenerating) {
-          // 已到最后一条，请求生成新备选
-          generateSwipe(idx);
-          return;
-        }
-        if (!m.swipes || m.swipes.length <= 1) return;
-        var next = Math.max(0, Math.min(m.swipes.length - 1, (m.swipe_id || 0) + dir));
-        m.swipe_id = next;
-        m.mes = m.swipes[next];
+  /** 事件委托：chat-inner 上一次性绑定，消息增删无需重绑 */
+  function bindMsgActionsDelegate() {
+    $('#chat-inner').addEventListener('click', function (e) {
+      var swipeBtn = e.target.closest('.swipe-btn');
+      if (swipeBtn) { handleSwipeClick(swipeBtn); return; }
+      var actBtn = e.target.closest('.msg-act');
+      if (actBtn) { handleMsgActClick(actBtn); return; }
+      var older = e.target.closest('#btn-load-older');
+      if (older) { RENDER_WINDOW += 100; renderMessages(); }
+    });
+  }
+
+  function handleSwipeClick(btn) {
+    var idx = parseInt(btn.closest('.msg').getAttribute('data-idx'));
+    var m = state.messages[idx];
+    var dir = parseInt(btn.getAttribute('data-swipe'));
+    if (dir > 0 && state.currentChat && (!m.swipes || m.swipe_id >= m.swipes.length - 1) && !state.isGenerating) {
+      // 已到最后一条，请求生成新备选
+      generateSwipe(idx);
+      return;
+    }
+    if (!m.swipes || m.swipes.length <= 1) return;
+    var next = Math.max(0, Math.min(m.swipes.length - 1, (m.swipe_id || 0) + dir));
+    m.swipe_id = next;
+    m.mes = m.swipes[next];
+    renderMessages();
+  }
+
+  function handleMsgActClick(btn) {
+    var idx = parseInt(btn.closest('.msg').getAttribute('data-idx'));
+    var act = btn.getAttribute('data-act');
+    var m = state.messages[idx];
+    if (act === 'copy') {
+      navigator.clipboard && navigator.clipboard.writeText(m.mes);
+      toast('success', 'i-check', '已复制');
+    }
+    if (act === 'del') {
+      if (!state.currentChat) return;
+      api.deleteMessage(state.currentChat.id, idx).then(function () {
+        state.messages.splice(idx, 1);
         renderMessages();
+      }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+    }
+    if (act === 'regenerate') {
+      if (!state.currentChat || state.isGenerating) return;
+      // 删除该 AI 消息及其后的所有消息
+      state.messages.splice(idx);
+      api.deleteMessage(state.currentChat.id, idx).then(function () {
+        renderMessages();
+        // 找到最近的用户消息重新生成
+        var lastUserIdx = -1;
+        for (var i = state.messages.length - 1; i >= 0; i--) {
+          if (state.messages[i].is_user) { lastUserIdx = i; break; }
+        }
+        if (lastUserIdx >= 0) {
+          doSend(state.messages[lastUserIdx].mes);
+          toast('info', 'i-info', '正在重新生成…');
+        }
+      }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+    }
+    if (act === 'edit') {
+      openModal('编辑消息',
+        '<div class="field"><label class="field-label">内容</label><textarea id="edit-msg-text" style="min-height:120px">' + esc(m.mes) + '</textarea></div>',
+        '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-edit-msg">保存</button>');
+      $('#modal-ok-edit-msg').addEventListener('click', function () {
+        var text = $('#edit-msg-text').value;
+        api.editMessage(state.currentChat.id, idx, text).then(function () {
+          m.mes = text;
+          renderMessages();
+          closeModal();
+          toast('success', 'i-check', '已保存');
+        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
       });
-    });
-    $$('#chat-inner .msg-act').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var idx = parseInt(b.closest('.msg').getAttribute('data-idx'));
-        var act = b.getAttribute('data-act');
-        var m = state.messages[idx];
-        if (act === 'copy') {
-          navigator.clipboard && navigator.clipboard.writeText(m.mes);
-          toast('success', 'i-check', '已复制');
-        }
-        if (act === 'del') {
-          if (!state.currentChat) return;
-          api.deleteMessage(state.currentChat.id, idx).then(function () {
-            state.messages.splice(idx, 1);
-            renderMessages();
-          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-        }
-        if (act === 'regenerate') {
-          if (!state.currentChat || state.isGenerating) return;
-          // 删除该 AI 消息及其后的所有消息
-          var toRemove = state.messages.slice(idx).length;
-          state.messages.splice(idx);
-          api.deleteMessage(state.currentChat.id, idx).then(function () {
-            renderMessages();
-            // 找到最近的用户消息重新生成
-            var lastUserIdx = -1;
-            for (var i = state.messages.length - 1; i >= 0; i--) {
-              if (state.messages[i].is_user) { lastUserIdx = i; break; }
-            }
-            if (lastUserIdx >= 0) {
-              doSend(state.messages[lastUserIdx].mes);
-              toast('info', 'i-info', '正在重新生成…');
-            }
-          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-        }
-        if (act === 'edit') {
-          openModal('编辑消息',
-            '<div class="field"><label class="field-label">内容</label><textarea id="edit-msg-text" style="min-height:120px">' + esc(m.mes) + '</textarea></div>',
-            '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-edit-msg">保存</button>');
-          $('#modal-ok-edit-msg').addEventListener('click', function () {
-            var text = $('#edit-msg-text').value;
-            api.editMessage(state.currentChat.id, idx, text).then(function () {
-              m.mes = text;
-              renderMessages();
-              closeModal();
-              toast('success', 'i-check', '已保存');
-            }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-          });
-        }
-      });
-    });
+    }
   }
 
   /* ==================== 发送消息（SSE 流式） ==================== */
@@ -574,10 +604,10 @@
     state.abortController = new AbortController();
     setSendBtnGenerating(true);
 
-    // 本地追加用户消息
+    // 本地追加用户消息（增量渲染）
     var userMsg = { name: state.user.display_name || state.user.username, is_user: true, send_date: Date.now(), mes: text };
     state.messages.push(userMsg);
-    renderMessages();
+    appendMessage(userMsg);
 
     // 追加 typing 指示
     var typing = document.createElement('div');
@@ -604,8 +634,8 @@
       var aiMsg = { name: state.currentChar.name, is_user: false, send_date: Date.now(), mes: '', swipes: [], swipe_id: 0 };
       state.messages.push(aiMsg);
       typing.remove();
-      renderMessages();
-      var bubble = document.querySelector('.msg[data-idx="' + (state.messages.length - 1) + '"] .msg-bubble');
+      var aiNode = appendMessage(aiMsg);
+      var bubble = aiNode ? aiNode.querySelector('.msg-bubble') : document.querySelector('.msg[data-idx="' + (state.messages.length - 1) + '"] .msg-bubble');
       var full = '';
       function pump() {
         return reader.read().then(function (r) {
@@ -626,8 +656,15 @@
               aiMsg.mes = data.message.mes;
               aiMsg.swipes = data.message.swipes || [data.message.mes];
               aiMsg.swipe_id = data.message.swipe_id || 0;
-              if (bubble) bubble.textContent = data.message.mes;
-              renderMessages();
+              // 局部更新该条（swipe 行出现），不全量重绘
+              if (bubble) {
+                var wrap = bubble.closest('.msg');
+                if (wrap) {
+                  var fresh = document.createElement('div');
+                  fresh.innerHTML = buildMessageHtml(aiMsg, state.messages.length - 1);
+                  wrap.replaceWith(fresh.firstChild);
+                }
+              }
             }
             if (data.error) {
               toast('danger', 'i-alert', data.error);
@@ -1946,16 +1983,23 @@
   };
 
   /* ==================== 主题切换 ==================== */
-  $('#theme-toggle').addEventListener('click', function () {
-    var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  // 恢复主题偏好（localStorage）
+  function applyTheme(theme) {
     var icon = $('#theme-toggle use');
-    if (isLight) {
-      document.documentElement.removeAttribute('data-theme');
-      icon.setAttribute('href', '#i-moon');
-    } else {
+    if (theme === 'light') {
       document.documentElement.setAttribute('data-theme', 'light');
       icon.setAttribute('href', '#i-sun');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      icon.setAttribute('href', '#i-moon');
     }
+    try { localStorage.setItem('stzero_theme', theme || 'dark'); } catch (e) {}
+  }
+  applyTheme(localStorage.getItem('stzero_theme') || 'dark');
+
+  $('#theme-toggle').addEventListener('click', function () {
+    var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    applyTheme(isLight ? 'dark' : 'light');
   });
 
   /* ==================== 用户菜单 ==================== */
@@ -2016,6 +2060,7 @@
           if (!u) return;
           var isSelf = state.user && u.id === state.user.id;
           openModal('编辑用户 · ' + u.username,
+            '<div class="field"><label class="field-label">用户名（登录名）</label><input id="edit-user-username" value="' + esc(u.username) + '"></div>' +
             '<div class="field"><label class="field-label">显示名</label><input id="edit-user-display" value="' + esc(u.display_name || '') + '"></div>' +
             '<div class="field"><label class="field-label">角色</label>' +
             '<div class="select" id="edit-user-role">' +
@@ -2046,6 +2091,8 @@
           });
           $('#modal-ok-edit-user').addEventListener('click', function () {
             var payload = { display_name: $('#edit-user-display').value.trim() };
+            var newUsername = $('#edit-user-username').value.trim();
+            if (newUsername && newUsername !== u.username) payload.username = newUsername;
             if (!isSelf) payload.role = $('#edit-user-role .sel-value').textContent;
             var pw = $('#edit-user-pass').value;
             if (pw) payload.password = pw;
@@ -2149,6 +2196,7 @@
   }
 
   /* ==================== 启动 ==================== */
+  bindMsgActionsDelegate(); // 消息事件委托（一次绑定）
   if (isLoggedIn()) {
     initApp();
   } else {
