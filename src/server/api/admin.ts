@@ -6,14 +6,33 @@ import { getDb } from '../db.js';
 import { config } from '../config.js';
 import { requireAdmin, requireAuth } from '../auth/middleware.js';
 import { hashPassword, toSafeUser, User } from '../auth/passwords.js';
+import { getUserUsage, getEffectiveQuota, QuotaLimits } from '../quota.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
 
-/** 用户列表 */
+/** 用户列表（含每用户用量与有效配额） */
 adminRouter.get('/users', (_req, res) => {
   const users = getDb().prepare('SELECT * FROM users ORDER BY created_at').all() as unknown as User[];
-  return res.json({ users: users.map(toSafeUser) });
+  const withUsage = users.map((u) => {
+    const usage = getUserUsage(u.id);
+    const quota = getEffectiveQuota(u.id);
+    const override = (() => {
+      const row = getDb().prepare('SELECT data FROM settings WHERE user_id = ?').get(u.id) as { data?: string } | undefined;
+      if (!row?.data) return {};
+      try { return (JSON.parse(row.data) as { quota?: QuotaLimits }).quota ?? {}; } catch { return {}; }
+    })();
+    return {
+      ...toSafeUser(u),
+      usage: {
+        charactersCount: usage.charactersCount,
+        chatsCount: usage.chatsCount,
+        storageMB: +(usage.storageBytes / 1024 / 1024).toFixed(1),
+      },
+      quota: { ...quota, overrides: override },
+    };
+  });
+  return res.json({ users: withUsage });
 });
 
 /** 创建用户 */
@@ -46,13 +65,25 @@ adminRouter.patch('/users/:id', (req, res) => {
   if (user.id === req.user!.id && (req.body.role !== undefined || req.body.enabled === false)) {
     return res.status(400).json({ error: 'Cannot change your own role or disable yourself' });
   }
-  const { role, enabled, display_name, password, username } = req.body as {
+  const { role, enabled, display_name, password, username, quota } = req.body as {
     role?: 'user' | 'admin';
     enabled?: boolean;
     display_name?: string;
     password?: string;
     username?: string;
+    quota?: QuotaLimits | null;
   };
+  // 配额覆盖（写入该用户 settings.quota；null 清除覆盖回退站点默认）
+  let quotaWritten = false;
+  if (quota !== undefined) {
+    const row = db.prepare('SELECT data FROM settings WHERE user_id = ?').get(req.params.id) as { data?: string } | undefined;
+    const s = row?.data ? JSON.parse(row.data) : {};
+    if (quota === null || Object.keys(quota).length === 0) delete s.quota;
+    else s.quota = quota;
+    db.prepare('INSERT INTO settings (user_id, data) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data')
+      .run(req.params.id, JSON.stringify(s));
+    quotaWritten = true;
+  }
   const sets: string[] = [];
   const params: Array<string | number> = [];
   if (username !== undefined) {
@@ -69,7 +100,7 @@ adminRouter.patch('/users/:id', (req, res) => {
   if (enabled !== undefined) { sets.push('enabled = ?'); params.push(enabled ? 1 : 0); }
   if (display_name !== undefined) { sets.push('display_name = ?'); params.push(display_name); }
   if (password !== undefined) { sets.push('password_hash = ?'); params.push(hashPassword(password)); sets.push('ver = ver + 1'); }
-  if (sets.length === 0) return res.status(400).json({ error: 'No fields to update' });
+  if (sets.length === 0 && !quotaWritten) return res.status(400).json({ error: 'No fields to update' });
   sets.push('updated_at = ?');
   params.push(Date.now(), req.params.id);
   db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...params);

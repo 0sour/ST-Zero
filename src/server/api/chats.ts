@@ -14,6 +14,7 @@ import { parseWorldInfo, extractCharacterBook } from '../format/world-info.js';
 import { RegexScript } from '../engine/regex.js';
 import { buildPrompt, CharacterPromptData } from '../engine/prompt.js';
 import { generateChatCompletion, generateTextCompletion, BackendConfig } from '../backends/index.js';
+import { checkQuota } from '../quota.js';
 
 export const chatsRouter = Router();
 chatsRouter.use(requireAuth);
@@ -98,6 +99,9 @@ chatsRouter.get('/', (req, res) => {
 chatsRouter.post('/', (req, res) => {
   const { character_id, title, greeting_index } = req.body as { character_id?: string; title?: string; greeting_index?: number };
   if (!character_id) return res.status(400).json({ error: 'character_id is required' });
+  // 配额校验（聊天场次 + 总空间）
+  const quotaErr = checkQuota(req.user!.id);
+  if (quotaErr) return res.status(403).json({ error: quotaErr });
   const char = getDb().prepare('SELECT * FROM characters WHERE id = ? AND user_id = ?').get(character_id, req.user!.id);
   if (!char) return res.status(404).json({ error: 'Character not found' });
 

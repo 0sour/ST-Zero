@@ -6,6 +6,7 @@ import { config } from '../config.js';
 import { getDb } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { parseWorldInfo, serializeWorldInfo, WorldInfoFile } from '../format/world-info.js';
+import { checkQuota } from '../quota.js';
 
 export const worldsRouter = Router();
 worldsRouter.use(requireAuth);
@@ -33,6 +34,9 @@ worldsRouter.get('/:id', (req, res) => {
 worldsRouter.post('/', (req, res) => {
   const { name } = req.body as { name?: string };
   if (!name) return res.status(400).json({ error: 'Name is required' });
+  // 配额校验（总空间）
+  const quotaErr = checkQuota(req.user!.id, Buffer.byteLength(JSON.stringify(req.body ?? {}), 'utf-8'));
+  if (quotaErr) return res.status(403).json({ error: quotaErr });
   const id = randomUUID();
   const now = Date.now();
   const relPath = path.join('users', req.user!.id, 'worlds', `${id}.json`);
@@ -68,6 +72,9 @@ worldsRouter.post('/import', (req, res) => {
   try {
     // 客户端可传 name（通常来自文件名）；世界书 JSON 内 name 优先
     const body = req.body as Record<string, unknown>;
+    // 配额校验（总空间，含本次导入体积）
+    const quotaErr = checkQuota(req.user!.id, Buffer.byteLength(JSON.stringify(body), 'utf-8'));
+    if (quotaErr) return res.status(403).json({ error: quotaErr });
     const wi = parseWorldInfo(body);
     const name = wi.name || (typeof body.name === 'string' && body.name ? body.name : '导入的世界书');
     const id = randomUUID();

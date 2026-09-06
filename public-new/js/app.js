@@ -2066,9 +2066,15 @@
         '<div class="admin-list">' +
         users.map(function (u) {
           var isSelf = state.user && u.id === state.user.id;
+          var usage = u.usage || { charactersCount: 0, chatsCount: 0, storageMB: 0 };
+          var quota = u.quota || {};
+          var usageText = u.role === 'admin'
+            ? usage.storageMB + 'MB · 卡 ' + usage.charactersCount + ' · 聊 ' + usage.chatsCount + ' · 不限'
+            : usage.storageMB + 'MB · 卡 ' + usage.charactersCount + '/' + quota.maxCharacters + ' · 聊 ' + usage.chatsCount + '/' + quota.maxChats;
           return '<div class="admin-item">' +
             '<div class="wi-k">' + esc(u.username) + ' <span class="tag ' + (u.role === 'admin' ? 'tag-accent' : '') + '">' + esc(u.role) + '</span></div>' +
-            '<div class="wi-c">' + esc(u.display_name || '') + ' · ' + (u.enabled ? '启用' : '禁用') + (isSelf ? ' · 当前账号' : '') + '</div>' +
+            '<div class="wi-c">' + esc(u.display_name || '') + ' · ' + (u.enabled ? '启用' : '禁用') + (isSelf ? ' · 当前账号' : '') + '<br>' +
+              '<span style="color:var(--ink-3)">' + esc(usageText) + (quota.overrides && Object.keys(quota.overrides).length ? ' · 自定义配额' : '') + '</span></div>' +
             '<button class="icon-btn" data-edit-user="' + u.id + '" title="编辑"><svg class="ic"><use href="#i-user"/></svg></button>' +
             '<button class="icon-btn" data-toggle-user="' + u.id + '" title="' + (u.enabled ? '禁用' : '启用') + '"><svg class="ic"><use href="#i-refresh"/></svg></button>' +
             (isSelf ? '' : '<button class="icon-btn" data-del-user="' + u.id + '" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>') +
@@ -2102,6 +2108,9 @@
           var u = users.find(function (x) { return x.id === uid; });
           if (!u) return;
           var isSelf = state.user && u.id === state.user.id;
+          var usage = u.usage || { charactersCount: 0, chatsCount: 0, storageMB: 0 };
+          var q = u.quota || { maxCharacters: 50, maxStorageMB: 500, maxChats: 100, overrides: {} };
+          var ov = q.overrides || {};
           openModal('编辑用户 · ' + u.username,
             '<div class="field"><label class="field-label">用户名（登录名）</label><input id="edit-user-username" value="' + esc(u.username) + '"></div>' +
             '<div class="field"><label class="field-label">显示名</label><input id="edit-user-display" value="' + esc(u.display_name || '') + '"></div>' +
@@ -2116,6 +2125,12 @@
             '<div class="select-option' + (u.role === 'admin' ? ' selected' : '') + '" data-value="admin" role="option">管理员<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
             '</div></div></div>' +
             '<div class="field"><label class="field-label">重置密码（留空不修改）</label><input id="edit-user-pass" type="password" placeholder="新密码"></div>' +
+            '<div class="section-title">当前用量</div>' +
+            '<p style="font-size:12px;color:var(--ink-2);margin-bottom:12px">存储 ' + usage.storageMB + 'MB · 角色卡 ' + usage.charactersCount + ' 张 · 聊天 ' + usage.chatsCount + ' 场</p>' +
+            '<div class="section-title">配额覆盖（留空 = 站点默认）</div>' +
+            '<div class="field"><label class="field-label">角色卡数量上限</label><input id="edit-user-qc" type="number" min="1" value="' + (ov.maxCharacters ?? '') + '" placeholder="默认 ' + q.maxCharacters + '"></div>' +
+            '<div class="field"><label class="field-label">总存储空间上限（MB）</label><input id="edit-user-qs" type="number" min="1" value="' + (ov.maxStorageMB ?? '') + '" placeholder="默认 ' + q.maxStorageMB + '"></div>' +
+            '<div class="field"><label class="field-label">聊天场次上限</label><input id="edit-user-qch" type="number" min="1" value="' + (ov.maxChats ?? '') + '" placeholder="默认 ' + q.maxChats + '"></div>' +
             (isSelf ? '<p style="font-size:11px;color:var(--gold);margin-bottom:12px">不能修改自己的角色或禁用自己</p>' : ''),
             '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-edit-user">保存</button>');
           // 绑定角色下拉
@@ -2139,6 +2154,18 @@
             if (!isSelf) payload.role = $('#edit-user-role .sel-value').textContent;
             var pw = $('#edit-user-pass').value;
             if (pw) payload.password = pw;
+            // 配额覆盖（任一填写即生效；全部留空清除覆盖）
+            var qc = $('#edit-user-qc').value.trim();
+            var qs = $('#edit-user-qs').value.trim();
+            var qch = $('#edit-user-qch').value.trim();
+            if (qc || qs || qch) {
+              payload.quota = {};
+              if (qc) payload.quota.maxCharacters = parseInt(qc, 10);
+              if (qs) payload.quota.maxStorageMB = parseInt(qs, 10);
+              if (qch) payload.quota.maxChats = parseInt(qch, 10);
+            } else {
+              payload.quota = null;
+            }
             api.adminUpdateUser(uid, payload).then(function () {
               closeModal();
               $('#um-admin').click();
@@ -2195,6 +2222,7 @@
     api.adminSiteSettings().then(function (data) {
       var s = data.settings || {};
       var allowReg = s.allowRegistration === true || s.allowRegistration === 'true' || s.allowRegistration === 1;
+      var dq = s.defaultQuota || { maxCharacters: 50, maxStorageMB: 500, maxChats: 100 };
       var body =
         '<div class="section-title">站点设置</div>' +
         '<label class="check-row" style="margin-bottom:16px"><input type="checkbox" id="site-allow-reg"' + (allowReg ? ' checked' : '') + '> 开放注册</label>' +
@@ -2208,7 +2236,11 @@
         '<div class="select-option' + ((s.defaultUserRole || 'user') === 'user' ? ' selected' : '') + '" data-value="user" role="option">用户<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
         '<div class="select-option' + ((s.defaultUserRole || 'user') === 'admin' ? ' selected' : '') + '" data-value="admin" role="option">管理员<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
         '</div></div></div>' +
-        '<div class="field"><label class="field-label">站点公告（登录页显示）</label><textarea id="site-announcement">' + esc(s.announcement || '') + '</textarea></div>';
+        '<div class="field"><label class="field-label">站点公告（登录页显示）</label><textarea id="site-announcement">' + esc(s.announcement || '') + '</textarea></div>' +
+        '<div class="section-title">默认配额（新用户自动套用）</div>' +
+        '<div class="field"><label class="field-label">角色卡数量上限（张）</label><input id="site-qc" type="number" min="1" value="' + (dq.maxCharacters ?? 50) + '"></div>' +
+        '<div class="field"><label class="field-label">总存储空间上限（MB）</label><input id="site-qs" type="number" min="1" value="' + (dq.maxStorageMB ?? 500) + '"></div>' +
+        '<div class="field"><label class="field-label">聊天场次上限（个）</label><input id="site-qch" type="number" min="1" value="' + (dq.maxChats ?? 100) + '"></div>';
       openModal('站点设置', body,
         '<button class="btn" onclick="closeModal()">返回</button><button class="btn primary" id="modal-save-site">保存</button>');
       // 默认角色下拉
@@ -2230,6 +2262,11 @@
           allowRegistration: $('#site-allow-reg').checked,
           defaultUserRole: $('#site-default-role .sel-value').textContent,
           announcement: $('#site-announcement').value,
+          defaultQuota: {
+            maxCharacters: parseInt($('#site-qc').value, 10) || 50,
+            maxStorageMB: parseInt($('#site-qs').value, 10) || 500,
+            maxChats: parseInt($('#site-qch').value, 10) || 100,
+          },
         }).then(function () {
           closeModal();
           toast('success', 'i-check', '已保存');

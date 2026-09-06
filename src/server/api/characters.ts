@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import { getDb } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { readCharacterCardJson, writeCharacterCardJson } from '../format/png.js';
+import { checkCharacterQuota, checkQuota } from '../quota.js';
 import { detectSpec, normalizeToV2, toExportV2, getCharacterName, CharacterCardV2 } from '../format/character-card.js';
 
 export const charactersRouter = Router();
@@ -45,6 +46,9 @@ charactersRouter.get('/:id', (req, res) => {
 charactersRouter.post('/', upload.single('avatar'), (req, res) => {
   const { name, description, personality, scenario, first_mes, mes_example } = req.body as Record<string, string>;
   if (!name) return res.status(400).json({ error: 'Name is required' });
+  // 配额校验（数量 + 总空间）
+  const quotaErr = checkCharacterQuota(req.user!.id) ?? checkQuota(req.user!.id, req.file?.size ?? 0);
+  if (quotaErr) return res.status(403).json({ error: quotaErr });
   ensureUserDir(req.user!.id);
 
   const card: CharacterCardV2 = {
@@ -157,6 +161,9 @@ charactersRouter.get('/:id/export', (req, res) => {
 charactersRouter.post('/import', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const fileType = (req.body.file_type as string) || 'png';
+  // 配额校验（数量 + 总空间，含本次上传）
+  const quotaErr = checkCharacterQuota(req.user!.id) ?? checkQuota(req.user!.id, req.file.size);
+  if (quotaErr) return res.status(403).json({ error: quotaErr });
   ensureUserDir(req.user!.id);
   try {
     let card: CharacterCardV2;
