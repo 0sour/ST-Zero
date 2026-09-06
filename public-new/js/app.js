@@ -438,11 +438,20 @@
     $('#chat-inner').innerHTML = '<div class="empty"><div class="empty-icon"><svg class="ic"><use href="#i-message"/></svg></div><div class="empty-title">开始一段新的对话</div><div class="empty-line"></div><div class="empty-desc">发送第一条消息开始</div></div>';
   }
 
+  /** 聊天区淡入（角色/聊天切换时的过渡） */
+  function fadeChatIn() {
+    var area = $('#chat-messages');
+    area.style.animation = 'none';
+    void area.offsetHeight; // 强制重排以重启动画
+    area.style.animation = 'chat-fade 0.3s var(--ease-out)';
+  }
+
   function loadChat(id) {
     api.getChat(id).then(function (data) {
       state.currentChat = data.chat;
       state.messages = data.messages || [];
       renderMessages();
+      fadeChatIn();
     }).catch(function (e) { toast('danger', 'i-alert', e.message); });
   }
 
@@ -484,8 +493,9 @@
   }
 
   var RENDER_WINDOW = 100; // 长对话默认只渲染最近 100 条
-  function renderMessages() {
+  function renderMessages(keepScroll) {
     var box = $('#chat-inner');
+    var container = $('#chat-messages');
     if (!state.messages.length) { renderEmptyChat(); return; }
     var total = state.messages.length;
     var start = Math.max(0, total - RENDER_WINDOW);
@@ -496,8 +506,15 @@
     for (var i = start; i < total; i++) {
       html += buildMessageHtml(state.messages[i], i);
     }
+    // "加载更早"时保持视口位置（记录重绘前锚点到容器底的距离）
+    var prevHeight = keepScroll ? container.scrollHeight : 0;
+    var prevBottomGap = keepScroll ? container.scrollHeight - container.scrollTop : 0;
     box.innerHTML = html;
-    box.scrollIntoView({ block: 'end' });
+    if (keepScroll) {
+      container.scrollTop = container.scrollHeight - prevBottomGap;
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
   }
 
   /** 事件委托：chat-inner 上一次性绑定，消息增删无需重绑 */
@@ -508,7 +525,7 @@
       var actBtn = e.target.closest('.msg-act');
       if (actBtn) { handleMsgActClick(actBtn); return; }
       var older = e.target.closest('#btn-load-older');
-      if (older) { RENDER_WINDOW += 100; renderMessages(); }
+      if (older) { RENDER_WINDOW += 100; renderMessages(true); }
     });
   }
 
@@ -980,17 +997,27 @@
         openWorldEditor(el.getAttribute('data-id'));
       });
     });
-    // 启用/禁用开关
+    // 启用/禁用开关（局部更新 class，保留滑动动画）
     $$('#world-list [data-toggle-world]').forEach(function (toggle) {
       toggle.addEventListener('click', function () {
         var wid = toggle.getAttribute('data-toggle-world');
         var idx = state.selectedWorlds.indexOf(wid);
         if (idx >= 0) state.selectedWorlds.splice(idx, 1);
         else state.selectedWorlds.push(wid);
+        var nowEnabled = idx < 0;
+        // 动画：先切 class（滑动过渡），API 失败再回滚
+        toggle.className = nowEnabled ? 'rx-on' : 'rx-off';
+        toggle.title = nowEnabled ? '点击禁用' : '点击启用';
         api.updateSettings({ selectedWorlds: state.selectedWorlds }).then(function () {
-          renderWorlds();
-          toast('success', 'i-check', idx >= 0 ? '已禁用（不参与生成）' : '已启用（参与生成）');
-        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+          toast('success', 'i-check', nowEnabled ? '已启用（参与生成）' : '已禁用（不参与生成）');
+        }).catch(function (e) {
+          // 回滚
+          if (nowEnabled) state.selectedWorlds = state.selectedWorlds.filter(function (x) { return x !== wid; });
+          else state.selectedWorlds.push(wid);
+          toggle.className = nowEnabled ? 'rx-off' : 'rx-on';
+          toggle.title = nowEnabled ? '点击启用' : '点击禁用';
+          toast('danger', 'i-alert', e.message);
+        });
       });
     });
     // 删除
@@ -1185,10 +1212,15 @@
         var id = el.getAttribute('data-toggle');
         var script = state.regex.find(function (r) { return r.id === id; });
         if (!script) return;
-        api.updateRegex(id, { disabled: !script.disabled }).then(function () {
-          script.disabled = !script.disabled;
-          renderRegex();
-        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+        // 动画：先切 class（滑动过渡），API 失败再回滚
+        var nowDisabled = !script.disabled;
+        el.className = nowDisabled ? 'rx-off' : 'rx-on';
+        api.updateRegex(id, { disabled: nowDisabled }).then(function () {
+          script.disabled = nowDisabled;
+        }).catch(function (e) {
+          el.className = nowDisabled ? 'rx-on' : 'rx-off'; // 回滚
+          toast('danger', 'i-alert', e.message);
+        });
       });
     });
     $$('#regex-list .rx-item .rx-name').forEach(function (el) {
@@ -1960,26 +1992,37 @@
   });
 
   /* ==================== 移动端抽屉 ==================== */
-  $('#btn-mobile-menu').addEventListener('click', function () {
-    $('#main-sidebar').classList.toggle('open');
-    $('#mobile-overlay').classList.toggle('show');
-  });
-  // 移动端右侧栏抽屉
-  $('#btn-mobile-panel').addEventListener('click', function () {
-    $('#main-right-panel').classList.toggle('open');
-    $('#mobile-overlay').classList.toggle('show');
-  });
-  $('#mobile-overlay').addEventListener('click', function () {
+  // 左右抽屉互斥 + 背景滚动锁定
+  function openDrawer(side) {
+    var sidebar = $('#main-sidebar');
+    var panel = $('#main-right-panel');
+    if (side === 'left') {
+      sidebar.classList.toggle('open');
+      panel.classList.remove('open');
+      var anyOpen = sidebar.classList.contains('open');
+    } else {
+      panel.classList.toggle('open');
+      sidebar.classList.remove('open');
+      var anyOpen = panel.classList.contains('open');
+    }
+    $('#mobile-overlay').classList.toggle('show', anyOpen);
+    document.body.classList.toggle('drawer-open', anyOpen);
+  }
+  function closeDrawers() {
     $('#main-sidebar').classList.remove('open');
     $('#main-right-panel').classList.remove('open');
     $('#mobile-overlay').classList.remove('show');
-  });
+    document.body.classList.remove('drawer-open');
+  }
+  $('#btn-mobile-menu').addEventListener('click', function () { openDrawer('left'); });
+  // 移动端右侧栏抽屉
+  $('#btn-mobile-panel').addEventListener('click', function () { openDrawer('right'); });
+  $('#mobile-overlay').addEventListener('click', closeDrawers);
   // 移动端选中角色后自动关闭抽屉
   var origSelectChar = selectChar;
   selectChar = function (id) {
     origSelectChar(id);
-    $('#main-sidebar').classList.remove('open');
-    $('#mobile-overlay').classList.remove('show');
+    closeDrawers();
   };
 
   /* ==================== 主题切换 ==================== */
