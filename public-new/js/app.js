@@ -2105,7 +2105,6 @@
       var users = data.users || [];
       var list = $('#admin-users-list');
       list.innerHTML =
-        '<div class="btn-row" style="margin-bottom:12px"><button class="btn primary" id="modal-add-user" style="flex:1"><svg class="ic"><use href="#i-plus"/></svg> 新建用户</button></div>' +
         '<div class="admin-list">' +
         users.map(function (u) {
           var isSelf = state.user && u.id === state.user.id;
