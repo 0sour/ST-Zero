@@ -286,7 +286,11 @@
       $('#um-user-info').innerHTML = '<strong>' + esc(data.user.display_name || data.user.username) + '</strong>' + esc(data.user.username) + (data.user.role === 'admin' ? ' · 管理员' : '');
       $('#um-admin').style.display = data.user.role === 'admin' ? 'flex' : 'none';
       $('#user-avatar').textContent = (data.user.display_name || data.user.username)[0].toUpperCase();
+      // 管理员：设置页显示"站点设置"tab
+      var isAdmin = data.user.role === 'admin';
+      $$('.set-nav-item.admin-only').forEach(function (el) { el.classList.toggle('hidden', !isAdmin); });
       loadAll();
+      routeFromHash(); // 登录后按当前 hash 恢复子页面（如 #/settings）
     }).catch(function () { showLogin(); });
   }
 
@@ -1934,18 +1938,49 @@
     });
   });
 
-  /* ==================== 设置弹窗 ==================== */
-  $('#btn-settings').addEventListener('click', function () { $('#settings-overlay').classList.add('show'); });
-  $('#settings-close').addEventListener('click', function () { $('#settings-overlay').classList.remove('show'); });
-  $('#settings-overlay').addEventListener('click', function (e) { if (e.target === $('#settings-overlay')) $('#settings-overlay').classList.remove('show'); });
-  $$('.set-nav-item').forEach(function (item) {
-    item.addEventListener('click', function () {
-      $$('.set-nav-item').forEach(function (i) { i.classList.remove('active'); });
-      $$('.set-panel').forEach(function (p) { p.classList.remove('active'); });
-      item.classList.add('active');
-      document.querySelector('.set-panel[data-set-panel="' + item.getAttribute('data-set-tab') + '"]').classList.add('active');
+  /* ==================== 子页面（设置页 / 管理页） ==================== */
+  function showSubPage(id) {
+    $$('.sub-page').forEach(function (p) { p.classList.remove('show'); });
+    var page = document.getElementById(id);
+    if (page) page.classList.add('show');
+  }
+  function closeSubPages() {
+    $$('.sub-page').forEach(function (p) { p.classList.remove('show'); });
+  }
+
+  // 子页面内 tab 切换（.set-nav-item data-tab → .set-panel data-panel）
+  function bindPageTabs(scope) {
+    $$('.set-nav-item', scope).forEach(function (item) {
+      item.addEventListener('click', function () {
+        $$('.set-nav-item', scope).forEach(function (i) { i.classList.remove('active'); });
+        $$('.set-panel', scope).forEach(function (p) { p.classList.remove('active'); });
+        item.classList.add('active');
+        scope.querySelector('.set-panel[data-panel="' + item.getAttribute('data-tab') + '"]').classList.add('active');
+      });
     });
-  });
+  }
+  bindPageTabs($('#settings-page'));
+
+  // hash 路由：#settings / #admin，支持浏览器返回键
+  function routeFromHash() {
+    var h = location.hash.replace('#/', '');
+    if (h === 'settings') {
+      showSubPage('settings-page');
+      loadSettings();
+      if (state.user && state.user.role === 'admin') loadSiteSettings();
+    } else if (h === 'admin') {
+      showSubPage('admin-page');
+      $('#btn-add-user-page').style.display = 'none'; // 加载前置灰
+      renderAdminPage();
+    } else {
+      closeSubPages();
+    }
+  }
+  window.addEventListener('hashchange', routeFromHash);
+
+  $('#btn-settings').addEventListener('click', function () { location.hash = '/settings'; });
+  $('#settings-back').addEventListener('click', function () { location.hash = ''; });
+  $('#admin-back').addEventListener('click', function () { location.hash = ''; });
 
   /* ==================== 自研下拉（select） ==================== */
   $$('.select').forEach(function (sel) {
@@ -2055,14 +2090,22 @@
     setToken(null);
     api.logout().catch(function () {});
     $('#user-menu').classList.remove('show');
+    closeSubPages();
+    location.hash = '';
     showLogin();
   });
+  // 管理面板入口 → 管理页（hash 路由）
   $('#um-admin').addEventListener('click', function () {
     $('#user-menu').classList.remove('show');
+    location.hash = '/admin';
+  });
+  /* ==================== 管理页（用户管理） ==================== */
+  function renderAdminPage() {
     api.adminUsers().then(function (data) {
       var users = data.users || [];
-      var body = '<div class="section-title">用户管理</div>' +
-        '<div class="btn-row" style="margin-bottom:12px"><button class="btn primary" id="modal-add-user" style="flex:1">新建用户</button></div>' +
+      var list = $('#admin-users-list');
+      list.innerHTML =
+        '<div class="btn-row" style="margin-bottom:12px"><button class="btn primary" id="modal-add-user" style="flex:1"><svg class="ic"><use href="#i-plus"/></svg> 新建用户</button></div>' +
         '<div class="admin-list">' +
         users.map(function (u) {
           var isSelf = state.user && u.id === state.user.id;
@@ -2081,202 +2124,195 @@
           '</div>';
         }).join('') +
         '</div>';
-      openModal('管理面板', body,
-        '<button class="btn" id="modal-open-site-settings">站点设置</button><button class="btn" onclick="closeModal()">关闭</button>');
-      $('#modal-open-site-settings').addEventListener('click', function () { openSiteSettings(); });
-      $('#modal-add-user').addEventListener('click', function () {
-        openModal('新建用户',
-          '<div class="field"><label class="field-label">用户名</label><input id="new-user-name"></div>' +
-          '<div class="field"><label class="field-label">密码</label><input id="new-user-pass" type="password"></div>' +
-          '<div class="field"><label class="field-label">显示名</label><input id="new-user-display"></div>',
-          '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-add-user">创建</button>');
-        $('#modal-ok-add-user').addEventListener('click', function () {
-          api.adminCreateUser({
-            username: $('#new-user-name').value.trim(),
-            password: $('#new-user-pass').value,
-            display_name: $('#new-user-display').value.trim(),
-          }).then(function () {
+      $('#btn-add-user-page').style.display = 'flex';
+      bindAdminUserActions(users);
+    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+  }
+
+  /** 管理页用户操作绑定（编辑/启停/删除/新建，编辑与确认用弹窗） */
+  function bindAdminUserActions(users) {
+    $('#btn-add-user-page').addEventListener('click', function () {
+      openModal('新建用户',
+        '<div class="field"><label class="field-label">用户名</label><input id="new-user-name"></div>' +
+        '<div class="field"><label class="field-label">密码</label><input id="new-user-pass" type="password"></div>' +
+        '<div class="field"><label class="field-label">显示名</label><input id="new-user-display"></div>',
+        '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-add-user">创建</button>');
+      $('#modal-ok-add-user').addEventListener('click', function () {
+        api.adminCreateUser({
+          username: $('#new-user-name').value.trim(),
+          password: $('#new-user-pass').value,
+          display_name: $('#new-user-display').value.trim(),
+        }).then(function () {
+          closeModal();
+          renderAdminPage();
+          toast('success', 'i-check', '已创建');
+        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+      });
+    });
+    $$('#admin-users-list [data-edit-user]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var uid = b.getAttribute('data-edit-user');
+        var u = users.find(function (x) { return x.id === uid; });
+        if (!u) return;
+        var isSelf = state.user && u.id === state.user.id;
+        var usage = u.usage || { charactersCount: 0, chatsCount: 0, storageMB: 0 };
+        var q = u.quota || { maxCharacters: 50, maxStorageMB: 500, maxChats: 100, overrides: {} };
+        var ov = q.overrides || {};
+        openModal('编辑用户 · ' + u.username,
+          '<div class="field"><label class="field-label">用户名（登录名）</label><input id="edit-user-username" value="' + esc(u.username) + '"></div>' +
+          '<div class="field"><label class="field-label">显示名</label><input id="edit-user-display" value="' + esc(u.display_name || '') + '"></div>' +
+          '<div class="field"><label class="field-label">角色</label>' +
+          '<div class="select" id="edit-user-role">' +
+          '<div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">' +
+          '<span class="sel-value">' + esc(u.role) + '</span>' +
+          '<span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>' +
+          '</div>' +
+          '<div class="select-menu" role="listbox">' +
+          '<div class="select-option' + (u.role === 'user' ? ' selected' : '') + '" data-value="user" role="option">用户<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
+          '<div class="select-option' + (u.role === 'admin' ? ' selected' : '') + '" data-value="admin" role="option">管理员<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
+          '</div></div></div>' +
+          '<div class="field"><label class="field-label">重置密码（留空不修改）</label><input id="edit-user-pass" type="password" placeholder="新密码"></div>' +
+          '<div class="section-title">当前用量</div>' +
+          '<p style="font-size:12px;color:var(--ink-2);margin-bottom:12px">存储 ' + usage.storageMB + 'MB · 角色卡 ' + usage.charactersCount + ' 张 · 聊天 ' + usage.chatsCount + ' 场</p>' +
+          '<div class="section-title">配额覆盖（留空 = 站点默认）</div>' +
+          '<div class="field"><label class="field-label">角色卡数量上限</label><input id="edit-user-qc" type="number" min="1" value="' + (ov.maxCharacters ?? '') + '" placeholder="默认 ' + q.maxCharacters + '"></div>' +
+          '<div class="field"><label class="field-label">总存储空间上限（MB）</label><input id="edit-user-qs" type="number" min="1" value="' + (ov.maxStorageMB ?? '') + '" placeholder="默认 ' + q.maxStorageMB + '"></div>' +
+          '<div class="field"><label class="field-label">聊天场次上限</label><input id="edit-user-qch" type="number" min="1" value="' + (ov.maxChats ?? '') + '" placeholder="默认 ' + q.maxChats + '"></div>' +
+          (isSelf ? '<p style="font-size:11px;color:var(--gold);margin-bottom:12px">不能修改自己的角色或禁用自己</p>' : ''),
+          '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-edit-user">保存</button>');
+        var sel = $('#edit-user-role');
+        sel.querySelector('.select-trigger').addEventListener('click', function (e) {
+          e.stopPropagation();
+          sel.classList.toggle('open');
+        });
+        $$('.select-option', sel).forEach(function (opt) {
+          opt.addEventListener('click', function () {
+            $$('.select-option', sel).forEach(function (o) { o.classList.remove('selected'); });
+            opt.classList.add('selected');
+            sel.querySelector('.sel-value').textContent = opt.getAttribute('data-value');
+            sel.classList.remove('open');
+          });
+        });
+        $('#modal-ok-edit-user').addEventListener('click', function () {
+          var payload = { display_name: $('#edit-user-display').value.trim() };
+          var newUsername = $('#edit-user-username').value.trim();
+          if (newUsername && newUsername !== u.username) payload.username = newUsername;
+          if (!isSelf) payload.role = $('#edit-user-role .sel-value').textContent;
+          var pw = $('#edit-user-pass').value;
+          if (pw) payload.password = pw;
+          var qc = $('#edit-user-qc').value.trim();
+          var qs = $('#edit-user-qs').value.trim();
+          var qch = $('#edit-user-qch').value.trim();
+          if (qc || qs || qch) {
+            payload.quota = {};
+            if (qc) payload.quota.maxCharacters = parseInt(qc, 10);
+            if (qs) payload.quota.maxStorageMB = parseInt(qs, 10);
+            if (qch) payload.quota.maxChats = parseInt(qch, 10);
+          } else {
+            payload.quota = null;
+          }
+          api.adminUpdateUser(uid, payload).then(function () {
             closeModal();
-            $('#um-admin').click();
-            toast('success', 'i-check', '已创建');
+            renderAdminPage();
+            toast('success', 'i-check', '已保存');
           }).catch(function (e) { toast('danger', 'i-alert', e.message); });
         });
       });
-      $$('#modal-body [data-edit-user]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var uid = b.getAttribute('data-edit-user');
-          var u = users.find(function (x) { return x.id === uid; });
-          if (!u) return;
-          var isSelf = state.user && u.id === state.user.id;
-          var usage = u.usage || { charactersCount: 0, chatsCount: 0, storageMB: 0 };
-          var q = u.quota || { maxCharacters: 50, maxStorageMB: 500, maxChats: 100, overrides: {} };
-          var ov = q.overrides || {};
-          openModal('编辑用户 · ' + u.username,
-            '<div class="field"><label class="field-label">用户名（登录名）</label><input id="edit-user-username" value="' + esc(u.username) + '"></div>' +
-            '<div class="field"><label class="field-label">显示名</label><input id="edit-user-display" value="' + esc(u.display_name || '') + '"></div>' +
-            '<div class="field"><label class="field-label">角色</label>' +
-            '<div class="select" id="edit-user-role">' +
-            '<div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">' +
-            '<span class="sel-value">' + esc(u.role) + '</span>' +
-            '<span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>' +
-            '</div>' +
-            '<div class="select-menu" role="listbox">' +
-            '<div class="select-option' + (u.role === 'user' ? ' selected' : '') + '" data-value="user" role="option">用户<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
-            '<div class="select-option' + (u.role === 'admin' ? ' selected' : '') + '" data-value="admin" role="option">管理员<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
-            '</div></div></div>' +
-            '<div class="field"><label class="field-label">重置密码（留空不修改）</label><input id="edit-user-pass" type="password" placeholder="新密码"></div>' +
-            '<div class="section-title">当前用量</div>' +
-            '<p style="font-size:12px;color:var(--ink-2);margin-bottom:12px">存储 ' + usage.storageMB + 'MB · 角色卡 ' + usage.charactersCount + ' 张 · 聊天 ' + usage.chatsCount + ' 场</p>' +
-            '<div class="section-title">配额覆盖（留空 = 站点默认）</div>' +
-            '<div class="field"><label class="field-label">角色卡数量上限</label><input id="edit-user-qc" type="number" min="1" value="' + (ov.maxCharacters ?? '') + '" placeholder="默认 ' + q.maxCharacters + '"></div>' +
-            '<div class="field"><label class="field-label">总存储空间上限（MB）</label><input id="edit-user-qs" type="number" min="1" value="' + (ov.maxStorageMB ?? '') + '" placeholder="默认 ' + q.maxStorageMB + '"></div>' +
-            '<div class="field"><label class="field-label">聊天场次上限</label><input id="edit-user-qch" type="number" min="1" value="' + (ov.maxChats ?? '') + '" placeholder="默认 ' + q.maxChats + '"></div>' +
-            (isSelf ? '<p style="font-size:11px;color:var(--gold);margin-bottom:12px">不能修改自己的角色或禁用自己</p>' : ''),
-            '<button class="btn" onclick="closeModal()">取消</button><button class="btn primary" id="modal-ok-edit-user">保存</button>');
-          // 绑定角色下拉
-          var sel = $('#edit-user-role');
-          sel.querySelector('.select-trigger').addEventListener('click', function (e) {
-            e.stopPropagation();
-            sel.classList.toggle('open');
-          });
-          $$('.select-option', sel).forEach(function (opt) {
-            opt.addEventListener('click', function () {
-              $$('.select-option', sel).forEach(function (o) { o.classList.remove('selected'); });
-              opt.classList.add('selected');
-              sel.querySelector('.sel-value').textContent = opt.getAttribute('data-value');
-              sel.classList.remove('open');
-            });
-          });
-          $('#modal-ok-edit-user').addEventListener('click', function () {
-            var payload = { display_name: $('#edit-user-display').value.trim() };
-            var newUsername = $('#edit-user-username').value.trim();
-            if (newUsername && newUsername !== u.username) payload.username = newUsername;
-            if (!isSelf) payload.role = $('#edit-user-role .sel-value').textContent;
-            var pw = $('#edit-user-pass').value;
-            if (pw) payload.password = pw;
-            // 配额覆盖（任一填写即生效；全部留空清除覆盖）
-            var qc = $('#edit-user-qc').value.trim();
-            var qs = $('#edit-user-qs').value.trim();
-            var qch = $('#edit-user-qch').value.trim();
-            if (qc || qs || qch) {
-              payload.quota = {};
-              if (qc) payload.quota.maxCharacters = parseInt(qc, 10);
-              if (qs) payload.quota.maxStorageMB = parseInt(qs, 10);
-              if (qch) payload.quota.maxChats = parseInt(qch, 10);
-            } else {
-              payload.quota = null;
-            }
-            api.adminUpdateUser(uid, payload).then(function () {
+    });
+    $$('#admin-users-list [data-toggle-user]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var uid = b.getAttribute('data-toggle-user');
+        var u = users.find(function (x) { return x.id === uid; });
+        if (!u) return;
+        if (u.enabled) {
+          openModal('禁用用户',
+            '<p style="font-size:13px;color:var(--ink-2)">禁用后「' + esc(u.username) + '」将无法登录。确定禁用？</p>',
+            '<button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="modal-ok-disable-user">禁用</button>');
+          $('#modal-ok-disable-user').addEventListener('click', function () {
+            api.adminUpdateUser(uid, { enabled: 0 }).then(function () {
               closeModal();
-              $('#um-admin').click();
-              toast('success', 'i-check', '已保存');
+              renderAdminPage();
             }).catch(function (e) { toast('danger', 'i-alert', e.message); });
           });
+        } else {
+          api.adminUpdateUser(uid, { enabled: 1 }).then(function () {
+            closeModal();
+            renderAdminPage();
+          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+        }
+      });
+    });
+    $$('#admin-users-list [data-del-user]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var uid = b.getAttribute('data-del-user');
+        var u = users.find(function (x) { return x.id === uid; });
+        if (!u) return;
+        openModal('删除用户',
+          '<p style="font-size:13px;color:var(--ink-2)">将永久删除「' + esc(u.username) + '」及其所有角色、聊天、世界书数据，且不可恢复。确定删除？</p>',
+          '<button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="modal-ok-del-user">删除</button>');
+        $('#modal-ok-del-user').addEventListener('click', function () {
+          api.adminDeleteUser(uid).then(function () {
+            closeModal();
+            renderAdminPage();
+            toast('success', 'i-check', '已删除');
+          }).catch(function (e) { toast('danger', 'i-alert', e.message); });
         });
       });
-      $$('#modal-body [data-toggle-user]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var uid = b.getAttribute('data-toggle-user');
-          var u = users.find(function (x) { return x.id === uid; });
-          if (!u) return;
-          if (u.enabled) {
-            openModal('禁用用户',
-              '<p style="font-size:13px;color:var(--ink-2)">禁用后「' + esc(u.username) + '」将无法登录。确定禁用？</p>',
-              '<button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="modal-ok-disable-user">禁用</button>');
-            $('#modal-ok-disable-user').addEventListener('click', function () {
-              api.adminUpdateUser(uid, { enabled: 0 }).then(function () {
-                closeModal();
-                $('#um-admin').click();
-              }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-            });
-          } else {
-            api.adminUpdateUser(uid, { enabled: 1 }).then(function () {
-              closeModal();
-              $('#um-admin').click();
-            }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-          }
-        });
-      });
-      $$('#modal-body [data-del-user]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var uid = b.getAttribute('data-del-user');
-          var u = users.find(function (x) { return x.id === uid; });
-          if (!u) return;
-          openModal('删除用户',
-            '<p style="font-size:13px;color:var(--ink-2)">将永久删除「' + esc(u.username) + '」及其所有角色、聊天、世界书数据，且不可恢复。确定删除？</p>',
-            '<button class="btn" onclick="closeModal()">取消</button><button class="btn danger" id="modal-ok-del-user">删除</button>');
-          $('#modal-ok-del-user').addEventListener('click', function () {
-            api.adminDeleteUser(uid).then(function () {
-              closeModal();
-              $('#um-admin').click();
-              toast('success', 'i-check', '已删除');
-            }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-          });
-        });
-      });
-    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-  });
+    });
+  }
 
-  /* ==================== 站点设置 ==================== */
-  function openSiteSettings() {
+  /* ==================== 站点设置（设置页 site 面板，仅管理员） ==================== */
+  function loadSiteSettings() {
     api.adminSiteSettings().then(function (data) {
       var s = data.settings || {};
       var allowReg = s.allowRegistration === true || s.allowRegistration === 'true' || s.allowRegistration === 1;
       var dq = s.defaultQuota || { maxCharacters: 50, maxStorageMB: 500, maxChats: 100 };
-      var body =
-        '<div class="section-title">站点设置</div>' +
-        '<label class="check-row" style="margin-bottom:16px"><input type="checkbox" id="site-allow-reg"' + (allowReg ? ' checked' : '') + '> 开放注册</label>' +
-        '<div class="field"><label class="field-label">新用户默认角色</label>' +
-        '<div class="select" id="site-default-role">' +
-        '<div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">' +
-        '<span class="sel-value">' + esc(s.defaultUserRole || 'user') + '</span>' +
-        '<span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>' +
-        '</div>' +
-        '<div class="select-menu" role="listbox">' +
-        '<div class="select-option' + ((s.defaultUserRole || 'user') === 'user' ? ' selected' : '') + '" data-value="user" role="option">用户<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
-        '<div class="select-option' + ((s.defaultUserRole || 'user') === 'admin' ? ' selected' : '') + '" data-value="admin" role="option">管理员<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>' +
-        '</div></div></div>' +
-        '<div class="field"><label class="field-label">站点公告（登录页显示）</label><textarea id="site-announcement">' + esc(s.announcement || '') + '</textarea></div>' +
-        '<div class="section-title">默认配额（新用户自动套用）</div>' +
-        '<div class="field"><label class="field-label">角色卡数量上限（张）</label><input id="site-qc" type="number" min="1" value="' + (dq.maxCharacters ?? 50) + '"></div>' +
-        '<div class="field"><label class="field-label">总存储空间上限（MB）</label><input id="site-qs" type="number" min="1" value="' + (dq.maxStorageMB ?? 500) + '"></div>' +
-        '<div class="field"><label class="field-label">聊天场次上限（个）</label><input id="site-qch" type="number" min="1" value="' + (dq.maxChats ?? 100) + '"></div>';
-      openModal('站点设置', body,
-        '<button class="btn" onclick="closeModal()">返回</button><button class="btn primary" id="modal-save-site">保存</button>');
-      // 默认角色下拉
-      var sel = $('#site-default-role');
-      sel.querySelector('.select-trigger').addEventListener('click', function (e) {
-        e.stopPropagation();
-        sel.classList.toggle('open');
+      $('#site-allow-reg').checked = allowReg;
+      $('#site-default-role .sel-value').textContent = s.defaultUserRole || 'user';
+      $$('#site-default-role .select-option').forEach(function (o) {
+        o.classList.toggle('selected', (s.defaultUserRole || 'user') === o.getAttribute('data-value'));
       });
-      $$('.select-option', sel).forEach(function (opt) {
-        opt.addEventListener('click', function () {
-          $$('.select-option', sel).forEach(function (o) { o.classList.remove('selected'); });
-          opt.classList.add('selected');
-          sel.querySelector('.sel-value').textContent = opt.getAttribute('data-value');
-          sel.classList.remove('open');
-        });
-      });
-      $('#modal-save-site').addEventListener('click', function () {
-        api.adminUpdateSiteSettings({
-          allowRegistration: $('#site-allow-reg').checked,
-          defaultUserRole: $('#site-default-role .sel-value').textContent,
-          announcement: $('#site-announcement').value,
-          defaultQuota: {
-            maxCharacters: parseInt($('#site-qc').value, 10) || 50,
-            maxStorageMB: parseInt($('#site-qs').value, 10) || 500,
-            maxChats: parseInt($('#site-qch').value, 10) || 100,
-          },
-        }).then(function () {
-          closeModal();
-          toast('success', 'i-check', '已保存');
-        }).catch(function (e) { toast('danger', 'i-alert', e.message); });
-      });
-    }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+      $('#site-announcement').value = s.announcement || '';
+      $('#site-qc').value = dq.maxCharacters ?? 50;
+      $('#site-qs').value = dq.maxStorageMB ?? 500;
+      $('#site-qch').value = dq.maxChats ?? 100;
+    }).catch(function () {});
   }
+
+  function bindSiteSettings() {
+    var sel = $('#site-default-role');
+    sel.querySelector('.select-trigger').addEventListener('click', function (e) {
+      e.stopPropagation();
+      sel.classList.toggle('open');
+    });
+    $$('.select-option', sel).forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        $$('.select-option', sel).forEach(function (o) { o.classList.remove('selected'); });
+        opt.classList.add('selected');
+        sel.querySelector('.sel-value').textContent = opt.getAttribute('data-value');
+        sel.classList.remove('open');
+      });
+    });
+    $('#btn-save-site').addEventListener('click', function () {
+      api.adminUpdateSiteSettings({
+        allowRegistration: $('#site-allow-reg').checked,
+        defaultUserRole: $('#site-default-role .sel-value').textContent,
+        announcement: $('#site-announcement').value,
+        defaultQuota: {
+          maxCharacters: parseInt($('#site-qc').value, 10) || 50,
+          maxStorageMB: parseInt($('#site-qs').value, 10) || 500,
+          maxChats: parseInt($('#site-qch').value, 10) || 100,
+        },
+      }).then(function () {
+        toast('success', 'i-check', '已保存');
+      }).catch(function (e) { toast('danger', 'i-alert', e.message); });
+    });
+  }
+  bindSiteSettings();
 
   /* ==================== 启动 ==================== */
   bindMsgActionsDelegate(); // 消息事件委托（一次绑定）
+  routeFromHash(); // 处理初始 hash（如刷新时停留在 #/settings）
   if (isLoggedIn()) {
     initApp();
   } else {

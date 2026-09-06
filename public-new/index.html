@@ -256,68 +256,111 @@
   <div class="um-item danger" id="um-logout"><svg class="ic"><use href="#i-logout"/></svg>退出登录</div>
 </div>
 
-<!-- ==================== 设置弹窗 ==================== -->
-<div class="modal-overlay" id="settings-overlay">
-  <div class="modal modal-lg">
-    <div class="modal-header">
-      <span>设置</span>
-      <div class="spacer"></div>
-      <button class="icon-btn" id="settings-close"><svg class="ic"><use href="#i-x"/></svg></button>
+<!-- ==================== 设置页（全屏） ==================== -->
+<div class="sub-page" id="settings-page">
+  <div class="page-header">
+    <button class="tb-btn" id="settings-back" title="返回"><svg class="ic"><use href="#i-chevron-left"/></svg></button>
+    <div class="page-title">设置</div>
+    <div class="spacer"></div>
+  </div>
+  <div class="page-body">
+    <div class="set-nav">
+      <div class="set-nav-item active" data-tab="backend">后端连接</div>
+      <div class="set-nav-item" data-tab="persona">Persona</div>
+      <div class="set-nav-item admin-only hidden" data-tab="site">站点设置</div>
     </div>
-    <div class="modal-body" style="display:flex;padding:0;height:480px">
-      <div class="set-nav">
-        <div class="set-nav-item active" data-set-tab="0">后端连接</div>
-        <div class="set-nav-item" data-set-tab="1">Persona</div>
-      </div>
-      <div class="set-content">
-        <div class="set-panel active" data-set-panel="0">
-          <div class="section-title">后端连接</div>
-          <div class="field">
-            <label class="field-label">后端类型</label>
-            <div class="select" id="backend-type">
-              <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
-                <span class="sel-value">openai</span>
-                <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
-              </div>
-              <div class="select-menu" role="listbox">
-                <div class="select-option selected" data-value="openai" role="option">OpenAI 兼容<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
-                <div class="select-option" data-value="ollama" role="option">Ollama Cloud<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
-                <div class="select-option" data-value="kobold" role="option">KoboldAI<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
-                <div class="select-option" data-value="text" role="option">文本补全<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
-              </div>
+    <div class="set-content">
+      <div class="set-panel active" data-panel="backend">
+        <div class="section-title">后端连接</div>
+        <div class="field">
+          <label class="field-label">后端类型</label>
+          <div class="select" id="backend-type">
+            <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
+              <span class="sel-value">openai</span>
+              <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+            </div>
+            <div class="select-menu" role="listbox">
+              <div class="select-option selected" data-value="openai" role="option">OpenAI 兼容<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              <div class="select-option" data-value="ollama" role="option">Ollama Cloud<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              <div class="select-option" data-value="kobold" role="option">KoboldAI<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              <div class="select-option" data-value="text" role="option">文本补全<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
             </div>
           </div>
-          <div class="field">
-            <label class="field-label">API 地址</label>
-            <input id="backend-url" placeholder="http://localhost:11434/v1">
-          </div>
-          <div class="field">
-            <label class="field-label">模型</label>
-            <input id="backend-model" placeholder="qwen2.5">
-          </div>
-          <div class="field">
-            <label class="field-label">API Key（可选）</label>
-            <input id="backend-key" type="password" placeholder="sk-...">
-          </div>
-          <div class="btn-row">
-            <button class="btn primary" id="btn-save-settings">保存设置</button>
-          </div>
         </div>
-        <div class="set-panel" data-set-panel="1">
-          <div class="section-title">Persona</div>
-          <div class="field">
-            <label class="field-label">角色名</label>
-            <input id="persona-name" placeholder="你的角色名">
-          </div>
-          <div class="field">
-            <label class="field-label">角色描述</label>
-            <textarea id="persona-desc" placeholder="描述你的角色设定…"></textarea>
-          </div>
-          <div class="btn-row">
-            <button class="btn primary" id="btn-save-persona">保存 Persona</button>
-          </div>
+        <div class="field">
+          <label class="field-label">API 地址</label>
+          <input id="backend-url" placeholder="http://localhost:11434/v1">
+        </div>
+        <div class="field">
+          <label class="field-label">模型</label>
+          <input id="backend-model" placeholder="qwen2.5">
+        </div>
+        <div class="field">
+          <label class="field-label">API Key（可选）</label>
+          <input id="backend-key" type="password" placeholder="sk-...">
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-save-settings">保存设置</button>
         </div>
       </div>
+      <div class="set-panel" data-panel="persona">
+        <div class="section-title">Persona</div>
+        <div class="field">
+          <label class="field-label">角色名</label>
+          <input id="persona-name" placeholder="你的角色名">
+        </div>
+        <div class="field">
+          <label class="field-label">角色描述</label>
+          <textarea id="persona-desc" placeholder="描述你的角色设定…"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-save-persona">保存 Persona</button>
+        </div>
+      </div>
+      <div class="set-panel" data-panel="site">
+        <div class="section-title">站点设置</div>
+        <label class="check-row" style="margin-bottom:16px"><input type="checkbox" id="site-allow-reg"> 开放注册</label>
+        <div class="field">
+          <label class="field-label">新用户默认角色</label>
+          <div class="select" id="site-default-role">
+            <div class="select-trigger" tabindex="0" role="combobox" aria-expanded="false">
+              <span class="sel-value">user</span>
+              <span class="sel-arrow"><svg class="ic"><use href="#i-chevron-down"/></svg></span>
+            </div>
+            <div class="select-menu" role="listbox">
+              <div class="select-option selected" data-value="user" role="option">用户<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+              <div class="select-option" data-value="admin" role="option">管理员<span class="sel-check"><svg class="ic"><use href="#i-check"/></svg></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">站点公告（登录页显示）</label>
+          <textarea id="site-announcement"></textarea>
+        </div>
+        <div class="section-title">默认配额（新用户自动套用）</div>
+        <div class="field"><label class="field-label">角色卡数量上限（张）</label><input id="site-qc" type="number" min="1" value="50"></div>
+        <div class="field"><label class="field-label">总存储空间上限（MB）</label><input id="site-qs" type="number" min="1" value="500"></div>
+        <div class="field"><label class="field-label">聊天场次上限（个）</label><input id="site-qch" type="number" min="1" value="100"></div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-save-site">保存站点设置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 管理页（全屏） ==================== -->
+<div class="sub-page" id="admin-page">
+  <div class="page-header">
+    <button class="tb-btn" id="admin-back" title="返回"><svg class="ic"><use href="#i-chevron-left"/></svg></button>
+    <div class="page-title">管理面板</div>
+    <div class="spacer"></div>
+    <button class="btn primary" id="btn-add-user-page"><svg class="ic"><use href="#i-plus"/></svg> 新建用户</button>
+  </div>
+  <div class="page-body">
+    <div class="page-content-wide">
+      <div class="section-title">用户管理</div>
+      <div class="admin-list" id="admin-users-list"></div>
     </div>
   </div>
 </div>
